@@ -1,0 +1,70 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "noImplicitAny": true,
+    "noEmitOnError": true,
+    "removeComments": false,
+    "sourceMap": false,
+    "declaration": false,
+    "strictNullChecks": true,
+    "noImplicitThis": true,
+    "lib": [ "es5", "es2015.collection", "dom", "es2015.promise"],
+    "target": "es5",
+    "jsx": "react",
+    "module": "system",
+    "types": [],
+    "skipDefaultLibCheck": true
+  },
+  "files": [
+    "provided/src/LiteMol-plugin.d.ts",
+
+    //Data Interface
+    "src/DataInterface.ts",
+
+    //Common Utils
+    "src/CommonUtils/Tunnels.ts",  
+    "src/CommonUtils/Numbers.ts", 
+    "src/CommonUtils/Selection.ts", 
+
+    //Annotation data provider
+    "src/AnnotationDataProvider.ts", 
+
+    //Layer Vizualizer
+    "src/LayerVizualizer/UI.tsx",
+    "src/LayerVizualizer/Backend.ts",           
+    "src/LayerVizualizer/Vizualizer.ts", 
+    "src/LayerVizualizer/Components.ts", 
+    "src/LayerVizualizer/Colors.ts", 
+
+    //Datagrid components
+    "src/Datagrid/Components.tsx",
+
+    //Aglomered parameters
+    "src/AglomeredParameters/UI.tsx",     
+
+    //Layer Properties
+    "src/LayerProperties/UI.tsx",   
+    
+    //Layer Residues
+    "src/LayerResidues/UI.tsx",   
+
+    //Residue Annotations
+    "src/ResidueAnnotations/UI.tsx", 
+
+    //Protein Annotations
+    "src/ProteinAnnotations/UI.tsx",
+
+    //Download report
+    "src/DownloadReport/UI.tsx",
+
+    "src/SimpleRouter.ts",
+    
+    //UI
+    "src/State.ts",
+    "src/UI.tsx",
+    "src/Spec.ts",
+
+    //App
+    "src/App.ts"
+  ]
+}
