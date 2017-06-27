@@ -350,6 +350,12 @@ namespace LiteMol.Example.Channels.UI {
 
         private selectChannel(){
             let entity = this.props.state.plugin.context.select(this.props.channel.__id)[0];
+            if(entity == void 0){
+                State.showChannelVisuals(this.props.state.plugin,[this.props.channel],true);
+                this.setState({isVisible:true});
+                window.setTimeout((()=>{this.selectChannel()}).bind(this),50);
+                return;
+            }
             let channelRef = entity.ref;
             let plugin = this.props.state.plugin;
             

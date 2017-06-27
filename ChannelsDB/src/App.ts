@@ -13,12 +13,12 @@ namespace LiteMol.Example.Channels {
 
     (function() {
         let ROUTING_OPTIONS:any = {
-            "local":{defaultContextPath: "/Examples/Channels", defaultPid:"5an8", useParameterAsPid:true},
+            "local":{defaultContextPath: "/ChannelsDB", defaultPid:"5an8", useParameterAsPid:true},
             "chdb-test":{defaultContextPath: "/ChannelsDB/detail", defaultPid:"5an8", useLastPathPartAsPid:true},
             "test":{defaultContextPath: "/test/detail", defaultPid:"5an8", useLastPathPartAsPid:true},
             "chdb-prod":{defaultContextPath: "/ChannelsDB/detail", defaultPid:"5an8", useLastPathPartAsPid:true},
         };
-        let ROUTING_MODE = "local";
+        let ROUTING_MODE = "chdb-prod";
         
 
         let lvSettings: LayersVizualizer.LayersVizualizerSettings = {
