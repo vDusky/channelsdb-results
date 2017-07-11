@@ -329,67 +329,7 @@ namespace Annotation{
                 h.handler();
             }
         }
-/*
-        public static getResidueAnnotationsPromise(residueId:string):Promise<ResidueAnnotation[]>{
-            return new Promise<ResidueAnnotation[]>((res,rej)=>{
-                if(!this.subscribed){
-                    rej({error: 1, message: "Not subscribed for data yet!"});
-                    return;
-                }
 
-                if(this.residueAnnotations !== void 0){
-                    let value = this.residueAnnotations.get(residueId);
-                    if(value === void 0){
-                        res([]);
-                        return;
-                    }
-                    
-                    res(value);
-                    return;                    
-                }
-
-                rej({error: 2, message: "No data loaded"});
-            });
-        }
-
-        public static getChannelAnnotationsPromise(channelId:string):Promise<ChannelAnnotation|null>{
-            return new Promise<ChannelAnnotation|null>((res,rej)=>{
-                if(!this.subscribed){
-                    rej({error: 1, message: "Not subscribed for data yet!"});
-                    return;
-                }
-
-                if(this.channelAnnotations !== void 0){
-                    let value = this.channelAnnotations.get(channelId);
-                    if(value === void 0){
-                        res(null);
-                        return;
-                    }
-
-                    res(value);
-                    return;
-                }
-
-                rej({error: 2, message: "No data loaded"});
-            });
-        }
-
-        public static getProteinAnnotationsPromise():Promise<ProteinAnnotation[]>{
-            return new Promise<ProteinAnnotation[]>((res,rej)=>{
-                if(!this.subscribed){
-                    rej({error: 1, message: "Not subscribed for data yet!"});
-                    return;
-                }
-
-                if(this.proteinAnnotations !== void 0){
-                    res(this.proteinAnnotations);
-                    return;
-                }
-
-                rej({error: 2, message: "No data loaded"});
-            });
-        } 
-*/
         public static getResidueAnnotations(residueId:string):ResidueAnnotation[]|undefined{
             if(!this.subscribed){
                 return void 0;

@@ -151,35 +151,29 @@ namespace LayerProperties.UI{
             }
 
             let layerData = this.props.data[this.props.layerIdx].Properties;
+
             let rows = [];
             
             let charge = `${CommonUtils.Numbers.roundToDecimal(layerData.Charge,2).toString()} (+${CommonUtils.Numbers.roundToDecimal(layerData.NumPositives,2).toString()}/-${CommonUtils.Numbers.roundToDecimal(layerData.NumNegatives,2).toString()})`;
-            /*
-            rows.push(
-                    <DGRow columns={["Charged(+)",CommonUtils.Numbers.roundToDecimal(layerData.NumPositives,2).toString()]} />
-                );
-            rows.push(
-                    <DGRow columns={["Charged(-)",CommonUtils.Numbers.roundToDecimal(layerData.NumNegatives,2).toString()]} />
-                );
-                */
+            let minRadius = this.props.data[this.props.layerIdx].LayerGeometry.MinRadius;
+            
             rows.push(
                     <DGComponents.DGElementRow columns={[<span><span className="glyphicon glyphicon-tint properties-icon" />{"Hydropathy"}</span>,<span>{CommonUtils.Numbers.roundToDecimal(layerData.Hydropathy,2).toString()}</span>]} />
                 );
             rows.push(
                     <DGComponents.DGElementRow columns={[<span><span className="glyphicon glyphicon-plus properties-icon" />{"Polarity"}</span>,<span>{CommonUtils.Numbers.roundToDecimal(layerData.Polarity,2).toString()}</span>]} />
-                    /*<DGRow columns={["Polarity",CommonUtils.Numbers.roundToDecimal(layerData.Polarity,2).toString()]} />*/
                 );
             rows.push(
                     <DGComponents.DGElementRow columns={[<span><span className="glyphicon glyphicon-tint properties-icon upside-down" />{"Hydrophobicity"}</span>,<span>{CommonUtils.Numbers.roundToDecimal(layerData.Hydrophobicity,2).toString()}</span>]} />
-                    /*<DGRow columns={["Hydrophobicity",CommonUtils.Numbers.roundToDecimal(layerData.Hydrophobicity,2).toString()]} />*/
                 );
             rows.push(
                     <DGComponents.DGElementRow columns={[<span><span className="glyphicon glyphicon-scissors properties-icon" />{"Mutability"}</span>,<span>{CommonUtils.Numbers.roundToDecimal(layerData.Mutability,2).toString()}</span>]} />
-                    /*<DGRow columns={["Mutability",CommonUtils.Numbers.roundToDecimal(layerData.Mutability,2).toString()]} />*/
                 );
             rows.push(
                     <DGComponents.DGElementRow columns={[<span><span className="glyphicon glyphicon-flash properties-icon" />{"Charge"}</span>,<span>{charge}</span>]} />
-                    /*<DGRow columns={["Charge",/*CommonUtils.Numbers.roundToDecimal(layerData.Charge,2).toString()*//*charge]} />*/
+            );
+            rows.push(
+                    <DGComponents.DGElementRow columns={[<span><span className="icon bottleneck black properties-icon" />{"MinRadius"}</span>,<span>{CommonUtils.Numbers.roundToDecimal(minRadius,1)}</span>]} />
             );
             rows.push(<DGComponents.DGRowEmpty columnsCount={DGTABLE_COLS_COUNT}/>);
 

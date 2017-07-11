@@ -1,0 +1,15 @@
+.current-pbdbid-sign{
+    width: 141px;
+    height: 32px;
+    position: fixed;
+    z-index: 900;
+    line-height: 30px;
+    text-align: center;
+    font-size: 13pt;
+    background-color: #f8f8f8;
+    border-bottom-right-radius: 30px; 
+    left: 220px;
+    padding: 0;
+    color: #777;
+    padding-right: 10px;
+}

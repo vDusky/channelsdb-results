@@ -80,21 +80,10 @@ namespace ResidueAnnotations.UI{
 
         public selectResiude(residueId:string){
             let residueParts = residueId.split(" ").slice(0,2);
-            let residue = {authAsimId: residueParts[1], authSeqNumber: Number(residueParts[0])};
-            let query = LiteMol.Core.Structure.Query.residues(
-                ...[residue]
-            );
-
-            CommonUtils.Selection.SelectionHelper.clearSelection(this.props.controller);
-
-            let t = this.props.controller.createTransform();
-            t.add('polymer-visual', Transformer.Molecule.CreateSelectionFromQuery, { query, name: 'Residues' }, { ref: CommonUtils.Selection.SelectionHelper.getSelectionVisualRef(), isHidden: true })
-                //.then(Transformer.Molecule.CreateVisual, { style: Visualization.Molecule.Default.ForType.get('BallsAndSticks') }, {isHidden:true});
-
-            this.props.controller.applyTransform(t)
-                .then(()=>{
-                    LiteMol.Bootstrap.Command.Entity.Focus.dispatch(this.props.controller.context, this.props.controller.context.select(CommonUtils.Selection.SelectionHelper.getSelectionVisualRef()));
-                });    
+            let residue = {chain: {authAsymId: residueParts[1]}, authSeqNumber: Number(residueParts[0])};
+            if(!CommonUtils.Selection.SelectionHelper.isSelectedLight(residue)){
+                CommonUtils.Selection.SelectionHelper.selectResidueByAuthAsymIdAndAuthSeqNumberWithBallsAndSticks(this.props.controller, residue);
+            }
         }
 
         componentWillUnmount(){

@@ -2,7 +2,7 @@ body{
     margin: 0;
     padding: 0;
     background: #FFF;
-    overflow-x: hidden;
+    overflow: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -572,6 +572,22 @@ only screen and (max-height: 600px) {
 span.ATable-label {
     font-size: 9pt;
 }
+
+.icon.bottleneck{
+    background-image: url(../images/bottleneck-radius-white.png);
+    background-repeat: no-repeat;
+    background-position: center center;
+    height: 1em;
+    width: 1em;
+    background-size: 1em 1em;
+    display: inline-block;
+    vertical-align: text-top;
+}
+
+.icon.bottleneck.black{
+    background-image: url(../images/bottleneck-radius-black.png);
+}
+
 @media only screen and (max-width: 1360px){
     #dg-aglomered-parameters.datagrid .col.col-4{
         min-width:50px;

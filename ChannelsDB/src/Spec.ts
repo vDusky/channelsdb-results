@@ -83,7 +83,7 @@ namespace LiteMol.Example.Channels {
             Bootstrap.Behaviour.Molecule.HighlightElementInfo,
 
             // when the same element is clicked twice in a row, the selection is emptied
-            Bootstrap.Behaviour.UnselectElementOnRepeatedClick,
+            //Bootstrap.Behaviour.UnselectElementOnRepeatedClick,
             
             // distance to the last "clicked" element
             Bootstrap.Behaviour.Molecule.DistanceToLastClickedElement,

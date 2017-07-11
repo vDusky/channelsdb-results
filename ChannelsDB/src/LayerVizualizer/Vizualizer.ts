@@ -219,7 +219,7 @@ namespace LayersVizualizer{
             }
 
             this.resizeCanvas();
-            
+
             this.vizualize();
             this.highlightHitbox(this.currentLayerIdx);
         }
@@ -1377,8 +1377,9 @@ namespace LayersVizualizer{
             tmpCanvas.style.top="-1000px";
             tmpCanvas.id = this.tmpCanvasId;
 
-            tmpCanvas.width = canvas.width;
-            tmpCanvas.height = canvas.height;
+            let targetWidth = 1920;
+            tmpCanvas.width = targetWidth;
+            tmpCanvas.height = (targetWidth/canvas.width)*canvas.height;
 
             document.body.appendChild(tmpCanvas);
 
@@ -1633,7 +1634,7 @@ namespace LayersVizualizer{
         }
 
         /** Helpers **/
-        
+
         public getColor(value: number, settings: ColorPaletteFunctionSettings){
             let minVal = settings.minVal;
             let maxVal = settings.maxVal;

@@ -64,5 +64,7 @@ namespace LiteMol.Example.Channels {
         ProteinAnnotations.UI.render(document.getElementById("right-panel-tabs-1") !, plugin);
 
         DownloadReport.UI.render(document.getElementById("download-report") !);        
+
+        PdbIdSign.UI.render(document.getElementById("pdbid-sign") !);        
     })();
 }

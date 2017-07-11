@@ -157,57 +157,184 @@ var CommonUtils;
 (function (CommonUtils) {
     var Selection;
     (function (Selection) {
+        var Transformer = LiteMol.Bootstrap.Entity.Transformer;
+        ;
+        ;
+        ;
+        ;
         ;
         var SelectionHelper = (function () {
             function SelectionHelper() {
             }
+            SelectionHelper.attachOnResidueSelectHandler = function (handler) {
+                if (this.onResidueSelectHandlers === void 0) {
+                    this.onResidueSelectHandlers = [];
+                }
+                this.onResidueSelectHandlers.push({ handler: handler });
+            };
+            SelectionHelper.invokeOnResidueSelectHandlers = function (residue) {
+                if (this.onResidueSelectHandlers === void 0) {
+                    return;
+                }
+                for (var _i = 0, _a = this.onResidueSelectHandlers; _i < _a.length; _i++) {
+                    var h = _a[_i];
+                    h.handler(residue);
+                }
+            };
+            SelectionHelper.attachOnResidueLightSelectHandler = function (handler) {
+                if (this.onResidueLightSelectHandlers === void 0) {
+                    this.onResidueLightSelectHandlers = [];
+                }
+                this.onResidueLightSelectHandlers.push({ handler: handler });
+            };
+            SelectionHelper.invokeOnResidueLightSelectHandlers = function (residue) {
+                if (this.onResidueLightSelectHandlers === void 0) {
+                    return;
+                }
+                for (var _i = 0, _a = this.onResidueLightSelectHandlers; _i < _a.length; _i++) {
+                    var h = _a[_i];
+                    h.handler(residue);
+                }
+            };
             SelectionHelper.getSelectionVisualRef = function () {
                 return this.SELECTION_VISUAL_REF;
             };
             SelectionHelper.clearSelection = function (plugin) {
                 LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(plugin.context, this.SELECTION_VISUAL_REF);
+                setTimeout(function () { return LiteMol.Bootstrap.Event.Visual.VisualSelectElement.dispatch(plugin.context, LiteMol.Bootstrap.Interactivity.Info.empty); }, 0);
+            };
+            SelectionHelper.resetScene = function (plugin) {
+                LiteMol.Bootstrap.Command.Visual.ResetScene.dispatch(plugin.context, void 0);
+            };
+            SelectionHelper.chainEquals = function (c1, c2) {
+                if ((c1.asymId !== c2.asymId)
+                    || (c1.authAsymId !== c2.authAsymId)
+                    || (c1.index !== c2.index)) {
+                    return false;
+                }
+                return true;
+            };
+            SelectionHelper.residueEquals = function (r1, r2) {
+                if (r1 === void 0 && r2 === void 0) {
+                    return true;
+                }
+                if (r1 === void 0 || r2 === void 0) {
+                    return false;
+                }
+                if ((r1.authName !== r2.authName)
+                    || (r1.authSeqNumber !== r2.authSeqNumber)
+                    || (!this.chainEquals(r1.chain, r2.chain))
+                    || (r1.index !== r2.index)
+                    || (r1.insCode !== r2.insCode)
+                    || (r1.isHet !== r2.isHet)
+                    || (r1.name !== r2.name)
+                    || (r1.seqNumber !== r2.seqNumber)) {
+                    return false;
+                }
+                return true;
+            };
+            SelectionHelper.selectResidueByAuthAsymIdAndAuthSeqNumberWithBallsAndSticks = function (plugin, residue) {
+                var query = LiteMol.Core.Structure.Query.chainsById(residue.chain.authAsymId).intersectWith((_a = LiteMol.Core.Structure.Query).residues.apply(_a, [{ authSeqNumber: residue.authSeqNumber }]));
+                CommonUtils.Selection.SelectionHelper.clearSelection(plugin);
+                this.resetScene(plugin);
+                if (this.selectedResidue !== void 0) {
+                    if ((this.selectedResidue.type === "full" && this.residueLightEquals({ type: "light", info: residue }, this.residueToLight(this.selectedResidue)))
+                        || (this.selectedResidue.type === "light" && this.residueLightEquals({ type: "light", info: residue }, this.selectedResidue))) {
+                        this.selectedResidue = undefined;
+                        return;
+                    }
+                }
+                var t = plugin.createTransform();
+                t.add('polymer-visual', Transformer.Molecule.CreateSelectionFromQuery, { query: query, name: 'Residues' }, { ref: CommonUtils.Selection.SelectionHelper.getSelectionVisualRef(), isHidden: true })
+                    .then(Transformer.Molecule.CreateVisual, { style: LiteMol.Bootstrap.Visualization.Molecule.Default.ForType.get('BallsAndSticks') }, { isHidden: true });
+                plugin.applyTransform(t)
+                    .then(function () {
+                    LiteMol.Bootstrap.Command.Entity.Focus.dispatch(plugin.context, plugin.context.select(CommonUtils.Selection.SelectionHelper.getSelectionVisualRef()));
+                });
+                this.selectedResidue = { type: "light", info: residue };
+                this.invokeOnResidueLightSelectHandlers(residue);
+                var _a;
+            };
+            SelectionHelper.residueToLight = function (residue) {
+                return {
+                    type: "light",
+                    info: {
+                        chain: residue.info.chain,
+                        authSeqNumber: residue.info.authSeqNumber
+                    }
+                };
+            };
+            SelectionHelper.residueLightEquals = function (r1, r2) {
+                if ((!this.chainLightEquals(r1.info.chain, r2.info.chain))
+                    || r1.info.authSeqNumber !== r2.info.authSeqNumber) {
+                    return false;
+                }
+                return true;
+            };
+            SelectionHelper.chainLightEquals = function (c1, c2) {
+                return (c1.authAsymId === c2.authAsymId);
+            };
+            SelectionHelper.isSelectedAnyChannel = function () {
+                return this.selectedChannelRef !== void 0;
+            };
+            SelectionHelper.isSelectedAny = function () {
+                return this.isSelectedAnyChannel() || this.selectedResidue !== void 0;
+            };
+            SelectionHelper.selectResidueWithBallsAndSticks = function (plugin, residue) {
+                var query = LiteMol.Core.Structure.Query.chainsById(residue.chain.asymId)
+                    .intersectWith(LiteMol.Core.Structure.Query.residues(residue));
+                CommonUtils.Selection.SelectionHelper.clearSelection(plugin);
+                this.selectedChannelRef = void 0;
+                this.resetScene(plugin);
+                if (this.selectedResidue !== void 0) {
+                    if (this.isSelected(residue)) {
+                        this.selectedResidue = undefined;
+                        return;
+                    }
+                }
+                var t = plugin.createTransform();
+                t.add('polymer-visual', Transformer.Molecule.CreateSelectionFromQuery, { query: query, name: 'Residues' }, { ref: CommonUtils.Selection.SelectionHelper.getSelectionVisualRef(), isHidden: true })
+                    .then(Transformer.Molecule.CreateVisual, { style: LiteMol.Bootstrap.Visualization.Molecule.Default.ForType.get('BallsAndSticks') }, { isHidden: true });
+                plugin.applyTransform(t)
+                    .then(function () {
+                    LiteMol.Bootstrap.Command.Entity.Focus.dispatch(plugin.context, plugin.context.select(CommonUtils.Selection.SelectionHelper.getSelectionVisualRef()));
+                });
+                this.selectedResidue = { type: "full", info: residue };
+                this.invokeOnResidueSelectHandlers(residue);
+            };
+            SelectionHelper.isSelected = function (residue) {
+                return (this.selectedResidue !== void 0)
+                    && ((this.selectedResidue.type === "full" && this.residueEquals(residue, this.selectedResidue.info))
+                        || (this.selectedResidue.type === "light" && this.residueLightEquals(this.residueToLight({ type: "full", info: residue }), this.selectedResidue)));
+            };
+            SelectionHelper.isSelectedLight = function (residue) {
+                return (this.selectedResidue !== void 0)
+                    && ((this.selectedResidue.type === "full" && this.residueLightEquals({ type: "light", info: residue }, this.residueToLight(this.selectedResidue)))
+                        || (this.selectedResidue.type === "light" && this.residueLightEquals({ type: "light", info: residue }, this.selectedResidue)));
             };
             SelectionHelper.attachClearSelectionToEventHandler = function (plugin) {
                 var _this = this;
                 this.interactionEventStream = LiteMol.Bootstrap.Event.Visual.VisualSelectElement.getStream(plugin.context)
                     .subscribe(function (e) { return _this.interactionHandler('select', e.data, plugin); });
             };
-            SelectionHelper.entitiesSame = function (entityIndices, elements) {
-                if (entityIndices == void 0) {
-                    return false;
-                }
-                if (elements == void 0) {
-                    return false;
-                }
-                if (entityIndices.length !== elements.length) {
-                    return false;
-                }
-                entityIndices.sort();
-                elements.sort();
-                for (var i = 0; i < entityIndices.length; i++) {
-                    if (entityIndices[i] !== elements[i]) {
-                        return false;
-                    }
-                }
-                return true;
-            };
             SelectionHelper.interactionHandler = function (type, i, plugin) {
                 //console.log("SelectionHelper: Caught-SelectEvent");
-                if (!i || i.source == null || i.source.ref === void 0) {
+                if (!i || i.source == null || i.source.ref === void 0 || i.source.props === void 0 || i.source.props.tag === void 0) {
                     //console.log("SelectionHelper: Event incomplete - ignoring");
                     return;
                 }
-                if (i.source.ref !== this.SELECTION_VISUAL_REF) {
-                    var currentInCodeSelectedEntity = plugin.context.select(this.SELECTION_VISUAL_REF)[0];
-                    if (currentInCodeSelectedEntity !== void 0 && currentInCodeSelectedEntity.props !== void 0) {
-                        if (this.entitiesSame(currentInCodeSelectedEntity.props.indices, i.elements)) {
-                            //console.log('SelectionHelper: Detected attempt to select selected item - reseting scene');
-                            LiteMol.Bootstrap.Command.Visual.ResetScene.dispatch(plugin.context, void 0);
-                        }
-                    }
-                    //console.log("SelectionHelper: SelectEvent from user interaction - clearing previous selection");
-                    SelectionHelper.clearSelection(plugin);
-                    return;
+                if (this.selectedResidue !== void 0) {
+                    //console.log("selected channel - clearing residues");
+                    LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(plugin.context, this.SELECTION_VISUAL_REF);
+                    this.selectedResidue = void 0;
+                }
+                if ((this.selectedChannelRef !== void 0) && (this.selectedChannelRef === i.source.ref)) {
+                    //console.log("double clicked on tunel - deselecting");
+                    this.clearSelection(plugin);
+                    this.selectedChannelRef = void 0;
+                }
+                else {
+                    this.selectedChannelRef = i.source.ref;
                 }
                 //console.log("SelectionHelper: SelectEvent from code - ignoring ");
             };
@@ -475,67 +602,6 @@ var Annotation;
                 h.handler();
             }
         };
-        /*
-                public static getResidueAnnotationsPromise(residueId:string):Promise<ResidueAnnotation[]>{
-                    return new Promise<ResidueAnnotation[]>((res,rej)=>{
-                        if(!this.subscribed){
-                            rej({error: 1, message: "Not subscribed for data yet!"});
-                            return;
-                        }
-        
-                        if(this.residueAnnotations !== void 0){
-                            let value = this.residueAnnotations.get(residueId);
-                            if(value === void 0){
-                                res([]);
-                                return;
-                            }
-                            
-                            res(value);
-                            return;
-                        }
-        
-                        rej({error: 2, message: "No data loaded"});
-                    });
-                }
-        
-                public static getChannelAnnotationsPromise(channelId:string):Promise<ChannelAnnotation|null>{
-                    return new Promise<ChannelAnnotation|null>((res,rej)=>{
-                        if(!this.subscribed){
-                            rej({error: 1, message: "Not subscribed for data yet!"});
-                            return;
-                        }
-        
-                        if(this.channelAnnotations !== void 0){
-                            let value = this.channelAnnotations.get(channelId);
-                            if(value === void 0){
-                                res(null);
-                                return;
-                            }
-        
-                            res(value);
-                            return;
-                        }
-        
-                        rej({error: 2, message: "No data loaded"});
-                    });
-                }
-        
-                public static getProteinAnnotationsPromise():Promise<ProteinAnnotation[]>{
-                    return new Promise<ProteinAnnotation[]>((res,rej)=>{
-                        if(!this.subscribed){
-                            rej({error: 1, message: "Not subscribed for data yet!"});
-                            return;
-                        }
-        
-                        if(this.proteinAnnotations !== void 0){
-                            res(this.proteinAnnotations);
-                            return;
-                        }
-        
-                        rej({error: 2, message: "No data loaded"});
-                    });
-                }
-        */
         AnnotationDataProvider.getResidueAnnotations = function (residueId) {
             if (!this.subscribed) {
                 return void 0;
@@ -610,313 +676,8 @@ var LayersVizualizer;
         var React = LiteMol.Plugin.React;
         var Event = LiteMol.Bootstrap.Event;
         var Transformer = LiteMol.Bootstrap.Entity.Transformer;
-        var Tree = LiteMol.Bootstrap.Tree;
-        var Transform = Tree.Transform;
         var Visualization = LiteMol.Bootstrap.Visualization;
         ;
-        function createProfileToLayerByCenterDistanceMapping(channel) {
-            var map = new Map();
-            var layers = channel.Layers.LayersInfo;
-            var profile = channel.Profile;
-            var maxProfileDistance = profile[profile.length - 1].Distance;
-            var maxLayerDistance = layers[layers.length - 1].LayerGeometry.EndDistance;
-            var lUnit = maxLayerDistance / 100;
-            var pUnit = maxProfileDistance / 100;
-            var layerSpaceToProfileSpace = function (layerVal) {
-                return (layerVal / lUnit) * pUnit;
-            };
-            var inRange = function (profileVal, layerStartDistance, layerEndDistance) {
-                return profileVal >= layerSpaceToProfileSpace(layerStartDistance)
-                    && profileVal < layerSpaceToProfileSpace(layerEndDistance);
-            };
-            for (var pIdx = 0, lIdx = 0; pIdx < profile.length;) {
-                if (inRange(profile[pIdx].Distance, layers[lIdx].LayerGeometry.StartDistance, layers[lIdx].LayerGeometry.EndDistance)) {
-                    map.set(pIdx, lIdx);
-                    pIdx++;
-                }
-                else {
-                    if (lIdx + 1 == layers.length) {
-                        map.set(pIdx, lIdx);
-                        pIdx++;
-                    }
-                    else {
-                        lIdx++;
-                    }
-                }
-            }
-            return map;
-        }
-        ;
-        function sphereSpaceToPercent(profileVal, sphereRadius) {
-            var sUnit = sphereRadius * 2 / 100;
-            return profileVal / sUnit;
-        }
-        ;
-        function layerSpaceToPercent(val, layerLength) {
-            var unit = layerLength / 100;
-            return val / unit;
-        }
-        ;
-        function layerSpaceToProfileSpace(layerVal, lUnit, pUnit) {
-            return (layerVal / lUnit) * pUnit;
-        }
-        ;
-        function percentCover(profileCenter, profileRadius, layerStartDistance, layerEndDistance, lUnit, pUnit) {
-            var sD_p = layerSpaceToProfileSpace(layerStartDistance, lUnit, pUnit);
-            var eD_p = layerSpaceToProfileSpace(layerEndDistance, lUnit, pUnit);
-            var sk = profileCenter; //-profileRadius;
-            var ek = profileCenter; //+profileRadius*2;
-            var sv = sD_p;
-            var ev = eD_p;
-            var S = Math.max(sk, sv);
-            var E = Math.min(ek, ev);
-            if (E - S !== 0) {
-                return 0;
-            }
-            else {
-                return 100;
-            }
-            //return sphereSpaceToPercent(E-S,profileRadius);
-            //return layerSpaceToPercent(E-S,layerEndDistance-layerStartDistance);
-            /*
-            //stred koule vlevo od vrstvy
-            let case1 = () => {
-                //koule mimo vrstvu celym profilem
-                if((profileCenter + profileRadius)-sD_p < 0){
-                    return 0;
-                }
-                //koule zasahuje svou casti do vrstvy zleva
-                if((profileCenter + profileRadius)-sD_p > 0
-                    && (profileCenter + profileRadius)-eD_p < 0){
-                    return sphereSpaceToPercent((profileCenter+profileRadius)-sD_p,profileRadius);
-                }
-                //koule obsahuje celou vrstvu a vrstva je umistena vpravo od stredu koule
-                if((profileCenter+profileRadius)-sD_p > 0
-                    && (profileCenter+profileRadius)-eD_p > 0){
-                    return sphereSpaceToPercent(eD_p-sD_p,profileRadius);
-                }
-    
-                throw new Error("InvalidState - unrecognized state");
-            };
-    
-            //stred koule uvnitr vrstvy
-            let case2 = () => {
-                //koule je cela ve vrstve
-                if((profileCenter-profileRadius)-sD_p >= 0
-                    && eD_p-(profileCenter+profileRadius) >= 0){
-                    return 100;
-                }
-                //koule presahuje vrstvu vlevo
-                if((profileCenter-profileRadius)-sD_p <= 0
-                    && eD_p-(profileCenter+profileRadius) >= 0){
-                    return sphereSpaceToPercent((profileCenter+profileRadius)-sD_p,profileRadius);
-                }
-                //koule presahuje vrstvu zprava
-                if((profileCenter-profileRadius)-sD_p >= 0
-                    && eD_p-(profileCenter+profileRadius) <= 0){
-                    return sphereSpaceToPercent(eD_p-(profileCenter-profileRadius),profileRadius);
-                }
-                //koule presahuje vlevo i vpravo a obsahuje celou vrstvu
-                if((profileCenter-profileRadius)-sD_p <= 0
-                    && eD_p-(profileCenter+profileRadius) <= 0){
-                    return sphereSpaceToPercent(eD_p-sD_p,profileRadius);
-                }
-    
-                throw new Error("InvalidState - unrecognized state");
-            };
-    
-            //stred koule vpravo od vrstvy
-            let case3 = () => {
-                //koule nezasahuje do vrstvy
-                if((profileCenter-profileRadius)-eD_p > 0){
-                    return 0;
-                }
-                //koule zasahuje levou pulkou do vrstvy, ale nepresahuje
-                if((profileCenter-profileRadius)-sD_p > 0
-                    && (profileCenter-profileRadius)-eD_p < 0){
-                    return sphereSpaceToPercent(eD_p-(profileCenter-profileRadius),profileRadius);
-                }
-                //koule obsahuje celou vrstvu v prave polovine
-                if((profileCenter-profileRadius)-sD_p < 0
-                    && (profileCenter+profileRadius)-eD_p > 0){
-                    return sphereSpaceToPercent(eD_p-sD_p,profileRadius);
-                }
-    
-                throw new Error("InvalidState - unrecognized state");
-            };
-    
-            if(profileCenter < sD_p){
-                return case1();
-            }
-            
-            if(profileCenter >= sD_p && profileCenter <= eD_p){
-                return case2();
-            }
-    
-            if(profileCenter > eD_p){
-                return case3();
-            }
-    
-            throw new Error("InvalidState - unrecognized state");
-            */
-        }
-        ;
-        function createProfileColorMapByRadiusAndCenterDistance(channel, layerIdx) {
-            console.log("mappingbyradiusandcenter");
-            /*let layerColors:LiteMol.Visualization.Color[] = [];*/
-            var layers = channel.Layers.LayersInfo;
-            var profile = channel.Profile;
-            var maxProfileDistance = profile[profile.length - 1].Distance;
-            var maxLayerDistance = layers[layers.length - 1].LayerGeometry.EndDistance;
-            var activeColor = LiteMol.Visualization.Color.fromRgb(255, 0, 0);
-            var inactiveColor = LiteMol.Visualization.Color.fromRgb(255, 255, 255);
-            /*
-            for(let i=0;i<layers.length;i++){
-                if(i===layerIdx){
-                    layerColors.push(activeColor);
-                }
-                else{
-                    layerColors.push(inactiveColor);
-                }
-            }
-            */
-            var lUnit = maxLayerDistance / 100;
-            var pUnit = lUnit; //maxProfileDistance/100;
-            var colorMap = new Map();
-            //let profileToColorMap = new Map<number,number>();
-            //let colors:LiteMol.Visualization.Color[] = [];
-            for (var pIdx = 0; pIdx < profile.length; pIdx++) {
-                var layerCover = [];
-                for (var lIdx = 0; lIdx < layers.length; lIdx++) {
-                    var sphere = profile[pIdx];
-                    var layerGeometry = layers[lIdx].LayerGeometry;
-                    var percent = percentCover(sphere.Distance, sphere.Radius, layerGeometry.StartDistance, layerGeometry.EndDistance, lUnit, pUnit);
-                    if (percent > 0) {
-                        layerCover.push({ layerIdx: lIdx, percent: percent });
-                    }
-                }
-                /*
-                layerCover.sort((a:{layerIdx:number,percent:number},b:{layerIdx:number,percent:number})=>{
-                    return a.percent-b.percent;
-                });
-                */
-                /*
-                if(layerCover.length<2){
-                    colorMap.set(pIdx,layerColors[layerCover[0].layerIdx]);
-                    //profileToColorMap.set(pIdx,pIdx);
-                    //colors.push(layerColors[layerCover[0].layerIdx]);
-                    continue;
-                }*/
-                /*
-                let color = layerColors[layerCover[0].layerIdx];
-                let lc = layerCover[0];
-                let currentPercent = lc.percent;
-                for(let lcIdx=1;lcIdx<layerCover.length;lcIdx++){
-                    let lc2 = layerCover[lcIdx];
-                    let color2 = layerColors[lc2.layerIdx];
-    
-                    let totalPercent = currentPercent+lc2.percent;
-                    let p = (currentPercent/totalPercent)*100;
-    
-                    color = {
-                        r:(1-(p/100)) * color.r + (p/100) * color2.r,
-                        g:(1-(p/100)) * color.g + (p/100) * color2.g,
-                        b:(1-(p/100)) * color.b + (p/100) * color2.b
-                    };
-                    currentPercent = totalPercent;
-                }
-                */
-                var color = inactiveColor;
-                var semiactiveColor = LiteMol.Visualization.Color.fromRgb(0, 0, 122);
-                for (var lcIdx = 0; lcIdx < layerCover.length; lcIdx++) {
-                    var p = layerCover[lcIdx].percent;
-                    if (layerCover[lcIdx].layerIdx === layerIdx) {
-                        console.log("Profile[" + pIdx + "] -> Layer[" + layerIdx + "] => cover: " + p);
-                        /*
-                        color = {
-                            r:(1-(p/100)) * semiactiveColor.r + (p/100) * activeColor.r,
-                            g:(1-(p/100)) * semiactiveColor.g + (p/100) * activeColor.g,
-                            b:(1-(p/100)) * semiactiveColor.b + (p/100) * activeColor.b
-                        };*/
-                        //LiteMol.Visualization.Color.interpolate(semiactiveColor,activeColor,p,color);
-                        color = activeColor;
-                        break;
-                    }
-                }
-                /*
-                let lc1 = layerCover[layerCover.length-1];
-                let lc2 = layerCover[layerCover.length-2];
-    
-                let color1 = layerColors[lc1.layerIdx];
-                let color2 = layerColors[lc2.layerIdx];
-    
-                let color = {
-                    r:(1-(lc1.percent/100)) * color1.r + (lc1.percent/100) * color2.r,
-                    g:(1-(lc1.percent/100)) * color1.g + (lc1.percent/100) * color2.g,
-                    b:(1-(lc1.percent/100)) * color1.b + (lc1.percent/100) * color2.b
-                };
-                
-                console.log(color1);
-                console.log(color2);
-                console.log(color);
-                console.log("-");
-                console.log(lc1);
-                console.log(lc2);
-                console.log("---!---");
-                */
-                colorMap.set(pIdx, color);
-                //profileToColorMap.set(pIdx,pIdx);
-                //colors.push(color);
-            }
-            return colorMap;
-        }
-        ;
-        function applyTheme(theme /*(e: any, props?: LiteMol.Visualization.Theme.Props | undefined) => LiteMol.Visualization.Theme*/, plugin, ref) {
-            var visual = plugin.context.select(ref)[0];
-            console.log(visual);
-            var query = LiteMol.Core.Structure.Query.everything(); /*.sequence('1', 'A', { seqNumber: 10 }, { seqNumber: 25 });*/
-            var action = Transform.build().add(visual, Transformer.Molecule.CreateSelectionFromQuery, { query: query, name: 'My name' }, { ref: 'sequence-selection' })
-                .then(Transformer.Molecule.CreateVisual, { style: LiteMol.Bootstrap.Visualization.Molecule.Default.ForType.get('BallsAndSticks') });
-            visual = plugin.context.select(ref)[0];
-            console.log(visual);
-            console.log(LiteMol.Bootstrap.Utils.Molecule.findModel(visual));
-            /*let themestatic = theme(visual);*/
-            plugin.applyTransform(action).then(function () {
-                LiteMol.Bootstrap.Command.Visual.UpdateBasicTheme.dispatch(plugin.context, { visual: visual, theme: theme /*: themestatic*/ });
-                LiteMol.Bootstrap.Command.Entity.Focus.dispatch(plugin.context, plugin.context.select('sequence-selection'));
-                // alternatively, you can do this
-                //Command.Molecule.FocusQuery.dispatch(plugin.context, { model: selectNodes('model')[0] as any, query })
-            });
-        }
-        function generateLayerSelectColorTheme(activeLayerIdx, app) {
-            /*
-            let colors = new Map<number, LiteMol.Visualization.Color>();
-            let coloringPropertyKey = app.vizualizer.getColoringPropertyKey();
-            for(let layerIdx=0; layerIdx<app.state.data.length; layerIdx++){
-                if(layerIdx === activeLayerIdx){
-                    colors.set(layerIdx, LiteMol.Visualization.Color.fromRgb(255,0,0));
-                }
-                else{
-                    colors.set(layerIdx, LiteMol.Visualization.Color.fromRgb(255,255,255));
-                }
-            }
-            */
-            var channel = app.props.controller.context.select(app.state.currentTunnelRef)[0].props.model.entity.element;
-            var profilePartsCount = channel.Profile.length;
-            //let profileToLayerMapping = createProfileColorMapByRadiusAndCenterDistance(channel,activeLayerIdx);
-            var max = 0;
-            var colors = createProfileColorMapByRadiusAndCenterDistance(channel, activeLayerIdx);
-            var theme = LiteMol.Visualization.Theme.createMapping(LiteMol.Visualization.Theme.createColorMapMapping(function (idx) {
-                return idx;
-                /*
-                let lIdx = profileToLayerMapping.get(idx);
-                if(lIdx === void 0)
-                    return void 0;
-                return lIdx;
-                */
-            }, colors, LiteMol.Visualization.Color.fromRgb(0, 0, 0)));
-            return theme;
-        }
         function render(vizualizer, target, plugin) {
             LiteMol.Plugin.ReactDOM.render(React.createElement(App, { vizualizer: vizualizer, controller: plugin }), target);
         }
@@ -986,84 +747,6 @@ var LayersVizualizer;
                     _this.forceUpdate();
                 }).bind(this));
             };
-            /*
-            generateLayerSelectColorTheme(activeLayerIdx: number){
-                let colors = new Map<number, LiteMol.Visualization.Color>();
-                let coloringPropertyKey = this.vizualizer.getColoringPropertyKey();
-                for(let layerIdx=0; layerIdx<this.state.data.length; layerIdx++){
-                    if(layerIdx === activeLayerIdx){
-                        colors.set(layerIdx, LiteMol.Visualization.Color.fromRgb(255,0,0));
-                    }
-                    else{
-                        colors.set(layerIdx, LiteMol.Visualization.Color.fromRgb(255,255,255));
-                    }
-                }
-    
-                let channel = (this.props.controller.context.select(this.state.currentTunnelRef)[0] as any).props.model.entity.element as DataInterface.Tunnel;
-                let profilePartsCount = channel.Profile.length;
-                let profileToLayerMapping = this.createProfileToLayerMapping(channel);
-                let max = 0;
-                let theme = LiteMol.Visualization.Theme.createMapping(LiteMol.Visualization.Theme.createColorMapMapping(
-                        (idx:number)=>{
-                            let lIdx = profileToLayerMapping.get(idx);
-                            if(lIdx === void 0)
-                                return void 0;
-                            return lIdx;
-                        },
-                        colors,
-                        LiteMol.Visualization.Color.fromRgb(0,0,0)
-                    ));
-                return theme;
-            }*/
-            //TODO:... vizualizace vrstev ve 3D
-            App.prototype.generateColorTheme = function () {
-                var colorSettings = this.props.vizualizer.getCurrentColoringSettings("default");
-                if (colorSettings === void 0 || colorSettings === null) {
-                    throw Error("No color info available!");
-                }
-                var colors = new Map();
-                var coloringPropertyKey = this.vizualizer.getColoringPropertyKey();
-                for (var layerIdx = 0; layerIdx < this.state.data.length; layerIdx++) {
-                    var layer = this.state.data[layerIdx];
-                    console.log(this.vizualizer.getColor(Number(layer.Properties[coloringPropertyKey]).valueOf(), colorSettings));
-                    var color = LayersVizualizer.Colors.parseRGBString(this.vizualizer.getColor(Number(layer.Properties[coloringPropertyKey]).valueOf(), colorSettings));
-                    colors.set(layerIdx, LiteMol.Visualization.Color.fromRgb(color.r, color.g, color.b));
-                }
-                var channel = this.props.controller.context.select(this.state.currentTunnelRef)[0].props.model.entity.element;
-                var profilePartsCount = channel.Profile.length;
-                var profileToLayerMapping = createProfileToLayerByCenterDistanceMapping(channel);
-                var max = 0;
-                var theme = LiteMol.Visualization.Theme.createMapping(LiteMol.Visualization.Theme.createColorMapMapping(function (idx) {
-                    var lIdx = profileToLayerMapping.get(idx);
-                    if (lIdx === void 0 || lIdx === 0)
-                        return void 0;
-                    return lIdx;
-                }, colors, LiteMol.Visualization.Color.fromRgb(0, 0, 0)));
-                /*
-            theme.setElementColor = (index:number, target:LiteMol.Visualization.Color)=>{
-                console.log(`index: ${index}`);
-            };*/
-                return theme;
-                /*
-            return LiteMol.Visualization.Theme.createMapping(LiteMol.Visualization.Theme.createPalleteMapping(
-                    (idx:number)=>{console.log(`Color Idx: ${idx}`);return idx%3;},
-                    color_arr
-                ));
-                */
-                /*.createColorMapThemeProvider(
-                    // here you can also use m.atoms.residueIndex, m.residues.name/.... etc.
-                    // you can also get more creative and use "composite properties"
-                    // for this check Bootstrap/Visualization/Theme.ts and Visualization/Base/Theme.ts and it should be clear hwo to do that.
-                    //
-                    // You can create "validation based" coloring using this approach as it is not implemented in the plugin for now.
-                    m => ({ index: m.data.atoms.chainIndex, property: m.data.chains.asymId }),
-                    colors,
-                    // this a fallback color used for elements not in the set
-                    LiteMol.Visualization.Color.fromRgb(0, 0, 123))
-                    // apply it to the model, you can also specify props, check Bootstrap/Visualization/Theme.ts
-                    //(model);*/
-            };
-            //applyTheme
             App.prototype.componentWillUnmount = function () {
                 if (this.interactionEventStream !== void 0) {
                     this.interactionEventStream.dispose();
@@ -1104,70 +787,6 @@ var LayersVizualizer;
                 return (React.createElement("div", { id: "layer-vizualizer-hint-div" + this.props.instanceId, className: "layer-vizualizer-hint-div" }, "Click on one of available channels to see more information..."));
             };
             return Hint;
-        }(React.Component));
-        var DetailsContainer = (function (_super) {
-            __extends(DetailsContainer, _super);
-            function DetailsContainer() {
-                return _super !== null && _super.apply(this, arguments) || this;
-            }
-            DetailsContainer.prototype.render = function () {
-                var layerId = this.props.layerId;
-                return (React.createElement("div", { className: "layer-vizualizer-detail-div", id: "layer-vizualizer-detail-div" + this.props.instanceId },
-                    React.createElement("h3", null, "Properties"),
-                    React.createElement(LayerProperties, { layerProperties: this.props.data[layerId].Properties }),
-                    React.createElement("h3", null, "Lining residues"),
-                    React.createElement(LayerResidues, { layerResidues: this.props.data[layerId].Residues })));
-            };
-            return DetailsContainer;
-        }(React.Component));
-        var LayerProperties = (function (_super) {
-            __extends(LayerProperties, _super);
-            function LayerProperties() {
-                return _super !== null && _super.apply(this, arguments) || this;
-            }
-            LayerProperties.prototype.render = function () {
-                var rv = [];
-                for (var key in this.props.layerProperties) {
-                    rv.push(React.createElement(LayerProperty, { propertyKey: key, propertyValue: this.props.layerProperties[key] }));
-                }
-                return (React.createElement("div", { className: "properties" }, rv));
-            };
-            return LayerProperties;
-        }(React.Component));
-        var LayerProperty = (function (_super) {
-            __extends(LayerProperty, _super);
-            function LayerProperty() {
-                return _super !== null && _super.apply(this, arguments) || this;
-            }
-            LayerProperty.prototype.render = function () {
-                return (React.createElement("span", { className: "propertyItem" }, this.props.propertyKey + ": " + this.props.propertyValue));
-            };
-            return LayerProperty;
-        }(React.Component));
-        var LayerResidues = (function (_super) {
-            __extends(LayerResidues, _super);
-            function LayerResidues() {
-                return _super !== null && _super.apply(this, arguments) || this;
-            }
-            LayerResidues.prototype.render = function () {
-                var rv = [];
-                for (var _i = 0, _a = this.props.layerResidues; _i < _a.length; _i++) {
-                    var key = _a[_i];
-                    rv.push(React.createElement(LayerResidue, { name: key }));
-                }
-                return (React.createElement("div", null, rv));
-            };
-            return LayerResidues;
-        }(React.Component));
-        var LayerResidue = (function (_super) {
-            __extends(LayerResidue, _super);
-            function LayerResidue() {
-                return _super !== null && _super.apply(this, arguments) || this;
-            }
-            LayerResidue.prototype.render = function () {
-                return (React.createElement("span", { className: "residueItem" }, "" + this.props.name));
-            };
-            return LayerResidue;
         }(React.Component));
         var ColorMenuItem = (function (_super) {
             __extends(ColorMenuItem, _super);
@@ -1486,16 +1105,8 @@ var LayersVizualizer;
                         authSeqNumber: Number(parts[1]).valueOf()
                     });
                 }
-                /*
-                console.log(`Layer ${layerIdx}:`);
-                console.log(res);
-                */
                 return res;
             };
-            /*
-            private removeResidue3DView(){
-                LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(this.props.app.props.controller.context, "res_visual");
-            }*/
             InteractionMap.prototype.resetFocusToTunnel = function () {
                 LiteMol.Bootstrap.Command.Entity.Focus.dispatch(this.props.app.props.controller.context, this.props.app.props.controller.context.select(this.props.app.state.currentTunnelRef));
             };
@@ -1507,7 +1118,6 @@ var LayersVizualizer;
                 */
                 var residues = this.getLayerResidues(layerIdx);
                 var query = (_a = LiteMol.Core.Structure.Query).residues.apply(_a, residues);
-                /*this.removeResidue3DView();*/
                 CommonUtils.Selection.SelectionHelper.clearSelection(this.props.app.props.controller);
                 var t = this.props.app.props.controller.createTransform();
                 t.add('polymer-visual', Transformer.Molecule.CreateSelectionFromQuery, { query: query, name: 'Residues' }, { ref: CommonUtils.Selection.SelectionHelper.getSelectionVisualRef() })
@@ -1528,8 +1138,6 @@ var LayersVizualizer;
                 if (!this.props.app.state.isLayerSelected) {
                     this.props.app.setState({ layerId: layerIdx });
                     $(window).trigger('layerTriggered', layerIdx);
-                    /*$( window ).trigger('resize');
-                    $( window ).trigger('contentResize');*/
                 }
             };
             InteractionMap.prototype.displayLayerResidues3DEventHandler = function (e) {
@@ -3432,8 +3040,9 @@ var LayersVizualizer;
             tmpCanvas.style.position = "absolute";
             tmpCanvas.style.top = "-1000px";
             tmpCanvas.id = this.tmpCanvasId;
-            tmpCanvas.width = canvas.width;
-            tmpCanvas.height = canvas.height;
+            var targetWidth = 1920;
+            tmpCanvas.width = targetWidth;
+            tmpCanvas.height = (targetWidth / canvas.width) * canvas.height;
             document.body.appendChild(tmpCanvas);
             var oldCtx = this.getContext();
             var tmpCtx = tmpCanvas.getContext("2d");
@@ -4408,37 +4017,25 @@ var LayerProperties;
                 var layerData = this.props.data[this.props.layerIdx].Properties;
                 var rows = [];
                 var charge = CommonUtils.Numbers.roundToDecimal(layerData.Charge, 2).toString() + " (+" + CommonUtils.Numbers.roundToDecimal(layerData.NumPositives, 2).toString() + "/-" + CommonUtils.Numbers.roundToDecimal(layerData.NumNegatives, 2).toString() + ")";
-                /*
-                rows.push(
-                        <DGRow columns={["Charged(+)",CommonUtils.Numbers.roundToDecimal(layerData.NumPositives,2).toString()]} />
-                    );
-                rows.push(
-                        <DGRow columns={["Charged(-)",CommonUtils.Numbers.roundToDecimal(layerData.NumNegatives,2).toString()]} />
-                    );
-                    */
+                var minRadius = this.props.data[this.props.layerIdx].LayerGeometry.MinRadius;
                 rows.push(React.createElement(DGComponents.DGElementRow, { columns: [React.createElement("span", null,
                             React.createElement("span", { className: "glyphicon glyphicon-tint properties-icon" }),
                             "Hydropathy"), React.createElement("span", null, CommonUtils.Numbers.roundToDecimal(layerData.Hydropathy, 2).toString())] }));
                 rows.push(React.createElement(DGComponents.DGElementRow, { columns: [React.createElement("span", null,
                             React.createElement("span", { className: "glyphicon glyphicon-plus properties-icon" }),
-                            "Polarity"), React.createElement("span", null, CommonUtils.Numbers.roundToDecimal(layerData.Polarity, 2).toString())] })
-                /*<DGRow columns={["Polarity",CommonUtils.Numbers.roundToDecimal(layerData.Polarity,2).toString()]} />*/
-                );
+                            "Polarity"), React.createElement("span", null, CommonUtils.Numbers.roundToDecimal(layerData.Polarity, 2).toString())] }));
                 rows.push(React.createElement(DGComponents.DGElementRow, { columns: [React.createElement("span", null,
                             React.createElement("span", { className: "glyphicon glyphicon-tint properties-icon upside-down" }),
-                            "Hydrophobicity"), React.createElement("span", null, CommonUtils.Numbers.roundToDecimal(layerData.Hydrophobicity, 2).toString())] })
-                /*<DGRow columns={["Hydrophobicity",CommonUtils.Numbers.roundToDecimal(layerData.Hydrophobicity,2).toString()]} />*/
-                );
+                            "Hydrophobicity"), React.createElement("span", null, CommonUtils.Numbers.roundToDecimal(layerData.Hydrophobicity, 2).toString())] }));
                 rows.push(React.createElement(DGComponents.DGElementRow, { columns: [React.createElement("span", null,
                             React.createElement("span", { className: "glyphicon glyphicon-scissors properties-icon" }),
-                            "Mutability"), React.createElement("span", null, CommonUtils.Numbers.roundToDecimal(layerData.Mutability, 2).toString())] })
-                /*<DGRow columns={["Mutability",CommonUtils.Numbers.roundToDecimal(layerData.Mutability,2).toString()]} />*/
-                );
+                            "Mutability"), React.createElement("span", null, CommonUtils.Numbers.roundToDecimal(layerData.Mutability, 2).toString())] }));
                 rows.push(React.createElement(DGComponents.DGElementRow, { columns: [React.createElement("span", null,
                             React.createElement("span", { className: "glyphicon glyphicon-flash properties-icon" }),
-                            "Charge"), React.createElement("span", null, charge)] })
-                /*<DGRow columns={["Charge",/*CommonUtils.Numbers.roundToDecimal(layerData.Charge,2).toString()*/ /*charge]} />*/
-                );
+                            "Charge"), React.createElement("span", null, charge)] }));
+                rows.push(React.createElement(DGComponents.DGElementRow, { columns: [React.createElement("span", null,
+                            React.createElement("span", { className: "icon bottleneck black properties-icon" }),
+                            "MinRadius"), React.createElement("span", null, CommonUtils.Numbers.roundToDecimal(minRadius, 1))] }));
                 rows.push(React.createElement(DGComponents.DGRowEmpty, { columnsCount: DGTABLE_COLS_COUNT }));
                 return rows;
             };
@@ -4669,7 +4266,6 @@ var ResidueAnnotations;
     var UI;
     (function (UI) {
         var React = LiteMol.Plugin.React;
-        var Transformer = LiteMol.Bootstrap.Entity.Transformer;
         var DGComponents = Datagrid.Components;
         var DGTABLE_COLS_COUNT = 2;
         ;
@@ -4720,19 +4316,11 @@ var ResidueAnnotations;
                 Annotation.AnnotationDataProvider.subscribeForData(this.dataWaitHandler.bind(this));
             };
             App.prototype.selectResiude = function (residueId) {
-                var _this = this;
                 var residueParts = residueId.split(" ").slice(0, 2);
-                var residue = { authAsimId: residueParts[1], authSeqNumber: Number(residueParts[0]) };
-                var query = (_a = LiteMol.Core.Structure.Query).residues.apply(_a, [residue]);
-                CommonUtils.Selection.SelectionHelper.clearSelection(this.props.controller);
-                var t = this.props.controller.createTransform();
-                t.add('polymer-visual', Transformer.Molecule.CreateSelectionFromQuery, { query: query, name: 'Residues' }, { ref: CommonUtils.Selection.SelectionHelper.getSelectionVisualRef(), isHidden: true });
-                //.then(Transformer.Molecule.CreateVisual, { style: Visualization.Molecule.Default.ForType.get('BallsAndSticks') }, {isHidden:true});
-                this.props.controller.applyTransform(t)
-                    .then(function () {
-                    LiteMol.Bootstrap.Command.Entity.Focus.dispatch(_this.props.controller.context, _this.props.controller.context.select(CommonUtils.Selection.SelectionHelper.getSelectionVisualRef()));
-                });
-                var _a;
+                var residue = { chain: { authAsymId: residueParts[1] }, authSeqNumber: Number(residueParts[0]) };
+                if (!CommonUtils.Selection.SelectionHelper.isSelectedLight(residue)) {
+                    CommonUtils.Selection.SelectionHelper.selectResidueByAuthAsymIdAndAuthSeqNumberWithBallsAndSticks(this.props.controller, residue);
+                }
             };
             App.prototype.componentWillUnmount = function () {
             };
@@ -5130,6 +4718,34 @@ var DownloadReport;
         }(React.Component));
     })(UI = DownloadReport.UI || (DownloadReport.UI = {}));
 })(DownloadReport || (DownloadReport = {}));
+var PdbIdSign;
+(function (PdbIdSign) {
+    var UI;
+    (function (UI) {
+        var React = LiteMol.Plugin.React;
+        function render(target) {
+            LiteMol.Plugin.ReactDOM.render(React.createElement(App, null), target);
+        }
+        UI.render = render;
+        var App = (function (_super) {
+            __extends(App, _super);
+            function App() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            App.prototype.componentDidMount = function () {
+            };
+            App.prototype.componentWillUnmount = function () {
+            };
+            App.prototype.render = function () {
+                return React.createElement("div", null,
+                    "PDB id: ",
+                    React.createElement("b", null, SimpleRouter.GlobalRouter.getCurrentPid()));
+            };
+            return App;
+        }(React.Component));
+        UI.App = App;
+    })(UI = PdbIdSign.UI || (PdbIdSign.UI = {}));
+})(PdbIdSign || (PdbIdSign = {}));
 var SimpleRouter;
 (function (SimpleRouter) {
     var URL = (function () {
@@ -5999,14 +5615,6 @@ var LiteMol;
                             <Origins origins={this.props.data.Origins.Computed} {...this.props} label='Computed' />
                             <Origins origins={this.props.data.Origins.Database} {...this.props} label='Database' />
                          */
-                        /*
-                        return <div>
-                            <Selection {...this.props} />
-            
-                            <h2>Channels</h2>
-                            <Channels channels={this.props.data.Channels} state={this.props}  header='Tunnels' />
-                        </div>;
-                        */
                     };
                     return Data;
                 }(React.Component));
@@ -6023,13 +5631,19 @@ var LiteMol;
                     }
                     Selection.prototype.componentWillMount = function () {
                         var _this = this;
+                        CommonUtils.Selection.SelectionHelper.attachOnResidueSelectHandler((function (r) {
+                            _this.setState({ label: r.name + " " + r.authSeqNumber + " " + r.chain.authAsymId });
+                        }).bind(this));
+                        CommonUtils.Selection.SelectionHelper.attachOnResidueLightSelectHandler((function (r) {
+                            _this.setState({ label: r.authSeqNumber + " " + r.chain.authAsymId });
+                        }).bind(this));
                         this.observer = this.props.plugin.subscribe(LiteMol.Bootstrap.Event.Molecule.ModelSelect, function (e) {
-                            if (!e.data) {
-                                _this.setState({ label: void 0 });
-                            }
-                            else {
+                            if (e.data) {
                                 var r = e.data.residues[0];
-                                _this.setState({ label: r.name + " " + r.authSeqNumber + " " + r.chain.authAsymId });
+                                CommonUtils.Selection.SelectionHelper.selectResidueWithBallsAndSticks(_this.props.plugin, r);
+                                if (!CommonUtils.Selection.SelectionHelper.isSelectedAny()) {
+                                    _this.setState({ label: void 0 });
+                                }
                             }
                         });
                         this.observerChannels = this.props.plugin.subscribe(LiteMol.Bootstrap.Event.Visual.VisualSelectElement, function (e) {
@@ -6037,26 +5651,28 @@ var LiteMol;
                             if (e.data !== void 0 && eventData.source !== void 0 && eventData.source.props !== void 0 && eventData.source.props.tag === void 0) {
                                 return;
                             }
-                            if (!e.data || (eventData !== void 0 && e.data.kind === 0)) {
-                                _this.setState({ label: void 0 });
-                            }
-                            else {
-                                var data = e.data;
-                                var c = data.source.props.tag.element;
-                                var len = CommonUtils.Tunnels.getLength(c);
-                                //let bneck = CommonUtils.Tunnels.getBottleneck(c);
-                                var annotation = Annotation.AnnotationDataProvider.getChannelAnnotation(c.Id);
-                                if (annotation === void 0 || annotation === null) {
-                                    _this.setState({ label: React.createElement("span", null,
-                                            React.createElement("b", null, c.Type),
-                                            ", ", "Length: " + len + " \u00C5") });
+                            if (e.data && (eventData === void 0 || e.data.kind !== 0)) {
+                                if (CommonUtils.Selection.SelectionHelper.isSelectedAnyChannel()) {
+                                    var data = e.data;
+                                    var c = data.source.props.tag.element;
+                                    var len = CommonUtils.Tunnels.getLength(c);
+                                    //let bneck = CommonUtils.Tunnels.getBottleneck(c);
+                                    var annotation = Annotation.AnnotationDataProvider.getChannelAnnotation(c.Id);
+                                    if (annotation === void 0 || annotation === null) {
+                                        _this.setState({ label: React.createElement("span", null,
+                                                React.createElement("b", null, c.Type),
+                                                ", ", "Length: " + len + " \u00C5") });
+                                    }
+                                    else {
+                                        _this.setState({ label: React.createElement("span", null,
+                                                React.createElement("b", null, annotation.text),
+                                                ", Length: ",
+                                                len,
+                                                " \u00C5") });
+                                    }
                                 }
-                                else {
-                                    _this.setState({ label: React.createElement("span", null,
-                                            React.createElement("b", null, annotation.text),
-                                            ", Length: ",
-                                            len,
-                                            " \u00C5") });
+                                else if (!CommonUtils.Selection.SelectionHelper.isSelectedAny()) {
+                                    _this.setState({ label: void 0 });
                                 }
                             }
                         });
@@ -6430,7 +6046,7 @@ var LiteMol;
                     // this shows what atom/residue is the pointer currently over
                     Bootstrap.Behaviour.Molecule.HighlightElementInfo,
                     // when the same element is clicked twice in a row, the selection is emptied
-                    Bootstrap.Behaviour.UnselectElementOnRepeatedClick,
+                    //Bootstrap.Behaviour.UnselectElementOnRepeatedClick,
                     // distance to the last "clicked" element
                     Bootstrap.Behaviour.Molecule.DistanceToLastClickedElement,
                     // this tracks what is downloaded and some basic actions. Does not send any private data etc. Source in Bootstrap/Behaviour/Analytics 
@@ -6513,6 +6129,7 @@ var LiteMol;
                 ResidueAnnotations.UI.render(document.getElementById("right-tabs-3"), plugin);
                 ProteinAnnotations.UI.render(document.getElementById("right-panel-tabs-1"), plugin);
                 DownloadReport.UI.render(document.getElementById("download-report"));
+                PdbIdSign.UI.render(document.getElementById("pdbid-sign"));
             })();
         })(Channels = Example.Channels || (Example.Channels = {}));
     })(Example = LiteMol.Example || (LiteMol.Example = {}));

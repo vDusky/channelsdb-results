@@ -57,6 +57,9 @@
     //Download report
     "src/DownloadReport/UI.tsx",
 
+    //PDBID sign
+    "src/PdbIdSign/UI.tsx",
+
     "src/SimpleRouter.ts",
     
     //UI

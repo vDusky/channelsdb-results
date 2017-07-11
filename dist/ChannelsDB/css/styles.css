@@ -110,16 +110,6 @@
     border-top:1px solid #000 !important; 
 }
 */
-#dg-aglomered-parameters.datagrid .icon.bottleneck {
-  background-image: url(../images/bottleneck-radius-white.png);
-  background-repeat: no-repeat;
-  background-position: center center;
-  height: 1em;
-  width: 1em;
-  background-size: 1em 1em;
-  display: inline-block;
-  vertical-align: text-top; }
-
 #dg-aglomered-parameters.datagrid .col.col-1 {
   min-width: 80px;
   width: 15%; }
@@ -203,12 +193,11 @@
   text-align: center;
   font-size: 13pt;
   background-color: #f8f8f8;
-  border-bottom-right-radius: 30px;
-  /* border-bottom-left-radius: 30px; */
   left: 0px;
   padding: 0;
   color: #777;
-  padding-left: 45px; }
+  padding-left: 45px;
+  border-right: 1px #ccc solid; }
 
 button.download.dropdown-toggle {
   background-color: transparent;
@@ -423,6 +412,21 @@ button.download.dropdown-toggle {
     padding-top: 0px; }
   .bottom-tabs-toggled .wrapper-container {
     width: 100%; } }
+
+.current-pbdbid-sign {
+  width: 141px;
+  height: 32px;
+  position: fixed;
+  z-index: 900;
+  line-height: 30px;
+  text-align: center;
+  font-size: 13pt;
+  background-color: #f8f8f8;
+  border-bottom-right-radius: 30px;
+  left: 220px;
+  padding: 0;
+  color: #777;
+  padding-right: 10px; }
 
 /*!
  * Bootstrap v3.3.7 (http://getbootstrap.com)
@@ -7582,7 +7586,7 @@ body {
   margin: 0;
   padding: 0;
   background: #FFF;
-  overflow-x: hidden;
+  overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale; }
 
@@ -8082,6 +8086,19 @@ only screen and (max-height: 600px) {
 
 span.ATable-label {
   font-size: 9pt; }
+
+.icon.bottleneck {
+  background-image: url(../images/bottleneck-radius-white.png);
+  background-repeat: no-repeat;
+  background-position: center center;
+  height: 1em;
+  width: 1em;
+  background-size: 1em 1em;
+  display: inline-block;
+  vertical-align: text-top; }
+
+.icon.bottleneck.black {
+  background-image: url(../images/bottleneck-radius-black.png); }
 
 @media only screen and (max-width: 1360px) {
   #dg-aglomered-parameters.datagrid .col.col-4 {

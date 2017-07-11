@@ -113,17 +113,6 @@
 }
 */
 
-#dg-aglomered-parameters.datagrid .icon.bottleneck{
-    background-image: url(../images/bottleneck-radius-white.png);
-    background-repeat: no-repeat;
-    background-position: center center;
-    height: 1em;
-    width: 1em;
-    background-size: 1em 1em;
-    display: inline-block;
-    vertical-align: text-top;
-}
-
 #dg-aglomered-parameters.datagrid .col.col-1{
     min-width: 80px;
     width:15%;

@@ -21,24 +21,27 @@ $( function() {
         $( ".right-tabs" ).toggleClass( "bottom-tabs-toggled" );
         //Agglomered parameters resize
         $(window).trigger('resize');
-        //resizes painting canvas od 2D vizualizer
+        //datagrid resize
         $( window ).trigger('contentResize');
-        $( window ).trigger('lvCcontentResize');
+        //resizes painting canvas od 2D vizualizer
+        $( window ).trigger('lvContentResize');
     });
     $( "#bottom-panel-toggler" ).on("click",function(){
         $( ".plugin" ).toggleClass( "bottom-panel-toggled" );
         $( ".bottom-panel" ).toggleClass( "bottom-panel-toggled" );
         //Agglomered parameters resize
         $( window ).trigger('resize');
-        //resizes painting canvas od 2D vizualizer
+        //datagrid resize
         $( window ).trigger('contentResize');
+        //resizes painting canvas od 2D vizualizer
+        $( window ).trigger('lvContentResize');
     });
     $( "#right-panel-toggler" ).on("click",function(){
         $( ".ui" ).toggleClass( "toggled" );
         $( ".bottom" ).toggleClass( "toggled" );
         //Agglomered parameters resize
         $( window ).trigger('resize');
-        //resizes painting canvas od 2D vizualizer
+        //datagrid resize
         $( window ).trigger('contentResize');
     });
 
