@@ -187,7 +187,7 @@ namespace LayerResidues.UI{
                     first = false;
                     trs.push(
                         <tr className={(this.isBackbone(residue)?"help":"")}>
-                            <td title={(this.isBackbone(residue)?residue:"")} className={`col col-1`} rowSpan={(annotations.length>1)?annotations.length:0}>
+                            <td title={(this.isBackbone(residue)?residue:"")} className={`col col-1`} rowSpan={(annotations.length>1)?annotations.length:void 0}>
                                 {residueNameEl}
                             </td>    
                             <td className={`col col-2`} >

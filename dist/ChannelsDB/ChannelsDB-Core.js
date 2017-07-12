@@ -4213,7 +4213,7 @@ var LayerResidues;
                     if (first === true) {
                         first = false;
                         trs.push(React.createElement("tr", { className: (this.isBackbone(residue) ? "help" : "") },
-                            React.createElement("td", { title: (this.isBackbone(residue) ? residue : ""), className: "col col-1", rowSpan: (annotations.length > 1) ? annotations.length : 0 }, residueNameEl),
+                            React.createElement("td", { title: (this.isBackbone(residue) ? residue : ""), className: "col col-1", rowSpan: (annotations.length > 1) ? annotations.length : void 0 }, residueNameEl),
                             React.createElement("td", { className: "col col-2" }, this.generateLink(annotation))));
                     }
                     else {
@@ -4399,7 +4399,7 @@ var ResidueAnnotations;
                     if (first === true) {
                         first = false;
                         trs.push(React.createElement("tr", { className: (annotation.isLining) ? "highlight" : "" },
-                            React.createElement("td", { rowSpan: (annotations.length > 1) ? annotations.length : 0, className: "col col-1" },
+                            React.createElement("td", { rowSpan: (annotations.length > 1) ? annotations.length : void 0, className: "col col-1" },
                                 React.createElement("a", { className: "hand", onClick: function () { _this.props.app.selectResiude(residue); } }, residue)),
                             React.createElement("td", { className: "col col-2" }, this.generateLink(annotation))));
                     }

@@ -167,7 +167,7 @@ namespace ResidueAnnotations.UI{
                     first = false;
                     trs.push(
                         <tr className={(annotation.isLining)?"highlight":""}>
-                            <td rowSpan={(annotations.length>1)?annotations.length:0} className={`col col-1`}>
+                            <td rowSpan={(annotations.length>1)?annotations.length:void 0} className={`col col-1`}>
                                 <a className="hand" onClick={()=>{this.props.app.selectResiude(residue)}}>{residue}</a>
                             </td>  
                             <td className={`col col-2`} >
