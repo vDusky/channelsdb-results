@@ -51,6 +51,31 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var StaticData;
+(function (StaticData) {
+    var Messages;
+    (function (Messages) {
+        var MESSAGES = {
+            "NumPositives": "Charge(+)",
+            "NumNegatives": "Charge(-)",
+            "MinRadius": "Radius",
+            "MinFreeRadius": "Free Radius",
+            /* Tooltips data */
+            "tooltip-MinRadius": "Radius of sphere within channel limited by three closest atoms",
+            "tooltip-MinFreeRadius": "Radius of sphere within channel limited by three closest main chain atoms in order to allow sidechain flexibility",
+            "tooltip-Bottleneck": "Radius of channel bottleneck",
+            "tooltip-Length": "Length of the channel",
+            "tooltip-Hydropathy": "Average of hydropathy index per each amino acid according to Kyte and Doolittle J.Mol.Biol.(1982) 157, 105-132. Range from the most hydrophilic (Arg = -4.5) to the most hydrophobic (Ile = 4.5)",
+            "tooltip-Hydrophobicity": "Average of normalized hydrophobicity scales by Cid et al. J. Protein Engineering (1992) 5, 373-375. Range from the most hydrophilic (Glu = -1.140) to the most hydrophobic (Ile = 1.810)",
+            "tooltip-Polarity": "Average of lining amino acid polarities by Zimmermann et al. J. Theor. Biol. (1968) 21, 170-201. Polarity ranges from nonpolar (Ala, Gly = 0) tthrough polar (e.g. Ser = 1.67) to charged (Glu = 49.90, Arg = 52.00)",
+            "tooltip-Mutability": "Average of relative mutability index by Jones, D.T. et al. Compur. Appl. Biosci. (1992) 8(3): 275-282. Realtive mutability based on empirical substitution matrices between similar protein sequences. High for easily substitutable amino acids, e.g. polars (Ser = 117, Thr = 107, Asn = 104) or aliphatics (Ala = 100, Val = 98, Ile = 103). Low for important structural amino acids, e.g. aromatics (Trp = 25, Phe = 51, Tyr = 50) or specials (Cys = 44, Pro = 58, Gly = 50)."
+        };
+        function get(messageKey) {
+            return MESSAGES[messageKey];
+        }
+        Messages.get = get;
+    })(Messages = StaticData.Messages || (StaticData.Messages = {}));
+})(StaticData || (StaticData = {}));
 var DataInterface;
 (function (DataInterface) {
     ;
@@ -196,10 +221,32 @@ var CommonUtils;
                     h.handler(residue);
                 }
             };
+            SelectionHelper.attachOnResidueBulkSelectHandler = function (handler) {
+                if (this.onResidueBulkSelectHandlers === void 0) {
+                    this.onResidueBulkSelectHandlers = [];
+                }
+                this.onResidueBulkSelectHandlers.push({ handler: handler });
+            };
+            SelectionHelper.invokeOnResidueBulkSelectHandlers = function (residues) {
+                if (this.onResidueBulkSelectHandlers === void 0) {
+                    return;
+                }
+                for (var _i = 0, _a = this.onResidueBulkSelectHandlers; _i < _a.length; _i++) {
+                    var h = _a[_i];
+                    h.handler(residues);
+                }
+            };
             SelectionHelper.getSelectionVisualRef = function () {
                 return this.SELECTION_VISUAL_REF;
             };
             SelectionHelper.clearSelection = function (plugin) {
+                this.clearSelectionPrivate(plugin);
+                this.selectedBulkResidues = void 0;
+                this.selectedResidue = void 0;
+                this.selectedChannelRef = void 0;
+                this.resetScene(plugin);
+            };
+            SelectionHelper.clearSelectionPrivate = function (plugin) {
                 LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(plugin.context, this.SELECTION_VISUAL_REF);
                 setTimeout(function () { return LiteMol.Bootstrap.Event.Visual.VisualSelectElement.dispatch(plugin.context, LiteMol.Bootstrap.Interactivity.Info.empty); }, 0);
             };
@@ -233,9 +280,68 @@ var CommonUtils;
                 }
                 return true;
             };
+            SelectionHelper.residueBulkSort = function (bulk) {
+                bulk.sort(function (a, b) {
+                    if (a.chain.authAsymId < b.chain.authAsymId) {
+                        return -1;
+                    }
+                    else if (a.chain.authAsymId == b.chain.authAsymId) {
+                        return a.authSeqNumber - b.authSeqNumber;
+                    }
+                    else {
+                        return 1;
+                    }
+                });
+            };
+            SelectionHelper.residueBulkEquals = function (r1, r2) {
+                if (r1.length !== r2.length) {
+                    return false;
+                }
+                this.residueBulkSort(r1);
+                this.residueBulkSort(r2);
+                for (var idx = 0; idx < r1.length; idx++) {
+                    if (this.residueLightEquals({ type: "light", info: r1[idx] }, { type: "light", info: r2[idx] })) {
+                        return false;
+                    }
+                }
+                return true;
+            };
+            SelectionHelper.selectResiduesBulkWithBallsAndSticks = function (plugin, residues) {
+                CommonUtils.Selection.SelectionHelper.clearSelectionPrivate(plugin);
+                this.selectedChannelRef = void 0;
+                this.selectedBulkResidues = void 0;
+                this.resetScene(plugin);
+                if (this.selectedBulkResidues !== void 0) {
+                    if (this.residueBulkEquals(residues, this.selectedBulkResidues)) {
+                        this.selectedResidue = undefined;
+                        return;
+                    }
+                }
+                var queries = [];
+                for (var _i = 0, residues_1 = residues; _i < residues_1.length; _i++) {
+                    var residue = residues_1[_i];
+                    queries.push((_a = LiteMol.Core.Structure.Query).chainsById.apply(_a, [residue.chain.authAsymId]).intersectWith((_b = LiteMol.Core.Structure.Query).residues.apply(_b, [{ authSeqNumber: residue.authSeqNumber }])).compile());
+                }
+                var query = (_c = LiteMol.Core.Structure.Query).or.apply(_c, queries);
+                var t = plugin.createTransform();
+                t.add('polymer-visual', Transformer.Molecule.CreateSelectionFromQuery, { query: query, name: 'Residues' }, { ref: CommonUtils.Selection.SelectionHelper.getSelectionVisualRef(), isHidden: true })
+                    .then(Transformer.Molecule.CreateVisual, { style: LiteMol.Bootstrap.Visualization.Molecule.Default.ForType.get('BallsAndSticks') }, { isHidden: true });
+                plugin.applyTransform(t)
+                    .then(function () {
+                    LiteMol.Bootstrap.Command.Entity.Focus.dispatch(plugin.context, plugin.context.select(CommonUtils.Selection.SelectionHelper.getSelectionVisualRef()));
+                });
+                this.selectedBulkResidues = residues;
+                this.invokeOnResidueBulkSelectHandlers(residues);
+                var _a, _b, _c;
+            };
+            SelectionHelper.isBulkResiduesSelected = function (residues) {
+                return this.selectedBulkResidues !== void 0;
+            };
             SelectionHelper.selectResidueByAuthAsymIdAndAuthSeqNumberWithBallsAndSticks = function (plugin, residue) {
                 var query = LiteMol.Core.Structure.Query.chainsById(residue.chain.authAsymId).intersectWith((_a = LiteMol.Core.Structure.Query).residues.apply(_a, [{ authSeqNumber: residue.authSeqNumber }]));
-                CommonUtils.Selection.SelectionHelper.clearSelection(plugin);
+                CommonUtils.Selection.SelectionHelper.clearSelectionPrivate(plugin);
+                this.selectedChannelRef = void 0;
+                this.selectedBulkResidues = void 0;
                 this.resetScene(plugin);
                 if (this.selectedResidue !== void 0) {
                     if ((this.selectedResidue.type === "full" && this.residueLightEquals({ type: "light", info: residue }, this.residueToLight(this.selectedResidue)))
@@ -278,13 +384,14 @@ var CommonUtils;
                 return this.selectedChannelRef !== void 0;
             };
             SelectionHelper.isSelectedAny = function () {
-                return this.isSelectedAnyChannel() || this.selectedResidue !== void 0;
+                return this.isSelectedAnyChannel() || this.selectedResidue !== void 0 || this.selectedBulkResidues !== void 0;
             };
             SelectionHelper.selectResidueWithBallsAndSticks = function (plugin, residue) {
                 var query = LiteMol.Core.Structure.Query.chainsById(residue.chain.asymId)
                     .intersectWith(LiteMol.Core.Structure.Query.residues(residue));
-                CommonUtils.Selection.SelectionHelper.clearSelection(plugin);
+                CommonUtils.Selection.SelectionHelper.clearSelectionPrivate(plugin);
                 this.selectedChannelRef = void 0;
+                this.selectedBulkResidues = void 0;
                 this.resetScene(plugin);
                 if (this.selectedResidue !== void 0) {
                     if (this.isSelected(residue)) {
@@ -328,9 +435,14 @@ var CommonUtils;
                     LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(plugin.context, this.SELECTION_VISUAL_REF);
                     this.selectedResidue = void 0;
                 }
+                if (this.selectedBulkResidues !== void 0) {
+                    //console.log("selected channel - clearing residues");
+                    LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(plugin.context, this.SELECTION_VISUAL_REF);
+                    this.selectedBulkResidues = void 0;
+                }
                 if ((this.selectedChannelRef !== void 0) && (this.selectedChannelRef === i.source.ref)) {
                     //console.log("double clicked on tunel - deselecting");
-                    this.clearSelection(plugin);
+                    this.clearSelectionPrivate(plugin);
                     this.selectedChannelRef = void 0;
                 }
                 else {
@@ -344,6 +456,25 @@ var CommonUtils;
         SelectionHelper.interactionEventStream = void 0;
         Selection.SelectionHelper = SelectionHelper;
     })(Selection = CommonUtils.Selection || (CommonUtils.Selection = {}));
+})(CommonUtils || (CommonUtils = {}));
+var CommonUtils;
+(function (CommonUtils) {
+    var Tooltips;
+    (function (Tooltips) {
+        function getMessageOrLeaveText(text) {
+            var message = StaticData.Messages.get(text);
+            if (message === void 0) {
+                return text;
+            }
+            return message;
+        }
+        Tooltips.getMessageOrLeaveText = getMessageOrLeaveText;
+        function hasTooltipText(messageKey) {
+            var message = StaticData.Messages.get("tooltip-" + messageKey);
+            return (message !== void 0);
+        }
+        Tooltips.hasTooltipText = hasTooltipText;
+    })(Tooltips = CommonUtils.Tooltips || (CommonUtils.Tooltips = {}));
 })(CommonUtils || (CommonUtils = {}));
 var Annotation;
 (function (Annotation) {
@@ -677,6 +808,7 @@ var LayersVizualizer;
         var Event = LiteMol.Bootstrap.Event;
         var Transformer = LiteMol.Bootstrap.Entity.Transformer;
         var Visualization = LiteMol.Bootstrap.Visualization;
+        var Tooltips = CommonUtils.Tooltips;
         ;
         function render(vizualizer, target, plugin) {
             LiteMol.Plugin.ReactDOM.render(React.createElement(App, { vizualizer: vizualizer, controller: plugin }), target);
@@ -687,6 +819,7 @@ var LayersVizualizer;
             function App() {
                 var _this = _super !== null && _super.apply(this, arguments) || this;
                 _this.interactionEventStream = void 0;
+                _this.tooltipsInitialized = false;
                 _this.state = {
                     instanceId: -1,
                     hasData: false,
@@ -754,6 +887,7 @@ var LayersVizualizer;
             };
             App.prototype.render = function () {
                 if (this.state.hasData) {
+                    $('.init-lvz-tooltip').tooltip();
                     return React.createElement(PaintingArea, __assign({}, this.state));
                 }
                 return React.createElement(Hint, __assign({}, this.state));
@@ -788,6 +922,21 @@ var LayersVizualizer;
             };
             return Hint;
         }(React.Component));
+        /*
+            function getMessageOrLeaveText(text:string){
+                let message = StaticData.Messages.get(text);
+                if(message === void 0){
+                    return text;
+                }
+        
+                return message;
+            }
+        
+            function hasTooltipText(messageKey:string){
+                let message = StaticData.Messages.get(`tooltip-${messageKey}`);
+                return (message !== void 0);
+            }
+        */
         var ColorMenuItem = (function (_super) {
             __extends(ColorMenuItem, _super);
             function ColorMenuItem() {
@@ -819,8 +968,14 @@ var LayersVizualizer;
                 }
             };
             ColorMenuItem.prototype.render = function () {
-                return (React.createElement("li", null,
-                    React.createElement("a", { "data-instanceidx": this.props.instanceId, "data-propertyname": this.props.propertyName, onClick: this.changeColoringProperty.bind(this) }, this.props.propertyName)));
+                if (Tooltips.hasTooltipText(this.props.propertyName)) {
+                    return (React.createElement("li", null,
+                        React.createElement("a", { "data-instanceidx": this.props.instanceId, "data-propertyname": this.props.propertyName, "data-toggle": "tooltip", "data-placement": "right", title: Tooltips.getMessageOrLeaveText("tooltip-" + this.props.propertyName), className: "init-lvz-tooltip lvz-properties", onClick: this.changeColoringProperty.bind(this) }, Tooltips.getMessageOrLeaveText(this.props.propertyName))));
+                }
+                else {
+                    return (React.createElement("li", null,
+                        React.createElement("a", { "data-instanceidx": this.props.instanceId, "data-propertyname": this.props.propertyName, onClick: this.changeColoringProperty.bind(this) }, Tooltips.getMessageOrLeaveText(this.props.propertyName))));
+                }
             };
             return ColorMenuItem;
         }(React.Component));
@@ -852,8 +1007,14 @@ var LayersVizualizer;
                 }
             };
             RadiusMenuItem.prototype.render = function () {
-                return (React.createElement("li", null,
-                    React.createElement("a", { "data-instanceidx": this.props.instanceId, "data-propertyname": this.props.propertyName, onClick: this.changeRadiusProperty.bind(this) }, this.props.propertyName)));
+                if (Tooltips.hasTooltipText(this.props.propertyName)) {
+                    return (React.createElement("li", null,
+                        React.createElement("a", { "data-instanceidx": this.props.instanceId, "data-propertyname": this.props.propertyName, "data-toggle": "tooltip", "data-placement": "right", title: Tooltips.getMessageOrLeaveText("tooltip-" + this.props.propertyName), className: "init-lvz-tooltip lvz-radius", onClick: this.changeRadiusProperty.bind(this) }, Tooltips.getMessageOrLeaveText(this.props.propertyName))));
+                }
+                else {
+                    return (React.createElement("li", null,
+                        React.createElement("a", { "data-instanceidx": this.props.instanceId, "data-propertyname": this.props.propertyName, onClick: this.changeRadiusProperty.bind(this) }, Tooltips.getMessageOrLeaveText(this.props.propertyName))));
+                }
             };
             return RadiusMenuItem;
         }(React.Component));
@@ -928,7 +1089,7 @@ var LayersVizualizer;
                 for (var prop in this.props.state.data[0].Properties) {
                     rv.push(React.createElement(ColorMenuItem, __assign({ propertyName: prop, isCustom: this.props.isCustom }, this.props.state)));
                 }
-                return React.createElement(BootstrapDropUpMenuButton, { items: rv, label: this.props.coloringProperty });
+                return React.createElement(BootstrapDropUpMenuButton, { items: rv, label: Tooltips.getMessageOrLeaveText(this.props.coloringProperty) });
             };
             ColorBySwitch.prototype.render = function () {
                 var items = this.generateColorMenu();
@@ -951,7 +1112,7 @@ var LayersVizualizer;
                     var prop = properties_1[_i];
                     rv.push(React.createElement(RadiusMenuItem, __assign({ propertyName: prop, isCustom: this.props.isCustom }, this.props.state)));
                 }
-                return React.createElement(BootstrapDropUpMenuButton, { items: rv, label: this.props.radiusProperty });
+                return React.createElement(BootstrapDropUpMenuButton, { items: rv, label: Tooltips.getMessageOrLeaveText(this.props.radiusProperty) });
             };
             RadiusSwitch.prototype.render = function () {
                 var items = this.generateRadiusSwitch();
@@ -3714,6 +3875,7 @@ var AglomeredParameters;
         var React = LiteMol.Plugin.React;
         var LiteMoleEvent = LiteMol.Bootstrap.Event;
         var DGComponents = Datagrid.Components;
+        var Tooltips = CommonUtils.Tooltips;
         var DGTABLE_COLS_COUNT = 7;
         ;
         function render(target, plugin) {
@@ -3761,6 +3923,7 @@ var AglomeredParameters;
             };
             App.prototype.render = function () {
                 if (this.state.data !== null) {
+                    $('.init-agp-tooltip').tooltip({ container: 'body' });
                     return (React.createElement("div", null,
                         React.createElement(DGTable, __assign({}, this.state))));
                 }
@@ -3791,28 +3954,28 @@ var AglomeredParameters;
             DGHead.prototype.render = function () {
                 return (React.createElement("table", null,
                     React.createElement("tr", null,
-                        React.createElement("th", { title: "Identifier", className: "col col-1 ATable-header-identifier" }, "Name"),
-                        React.createElement("th", { title: "Length", className: "col col-2 ATable-header-length" },
+                        React.createElement("th", { title: "Name", className: "col col-1 ATable-header-identifier init-agp-tooltip", "data-toggle": "tooltip", "data-placement": "bottom" }, "Name"),
+                        React.createElement("th", { title: Tooltips.getMessageOrLeaveText("tooltip-Length"), className: "col col-2 ATable-header-length init-agp-tooltip", "data-toggle": "tooltip", "data-placement": "bottom" },
                             React.createElement("span", { className: "glyphicon glyphicon-resize-horizontal" }),
                             " ",
                             React.createElement("span", { className: "ATable-label" }, "Length")),
-                        React.createElement("th", { title: "Bottleneck", className: "col col-3 ATable-header-bottleneck" },
+                        React.createElement("th", { title: Tooltips.getMessageOrLeaveText("tooltip-Bottleneck"), className: "col col-3 ATable-header-bottleneck init-agp-tooltip", "data-toggle": "tooltip", "data-placement": "bottom" },
                             React.createElement("span", { className: "icon bottleneck" }),
                             " ",
                             React.createElement("span", { className: "ATable-label" }, "Bottleneck")),
-                        React.createElement("th", { title: "Hydropathy", className: "col col-4 ATable-header-hydropathy" },
+                        React.createElement("th", { title: Tooltips.getMessageOrLeaveText("tooltip-Hydropathy"), className: "col col-4 ATable-header-hydropathy init-agp-tooltip", "data-toggle": "tooltip", "data-placement": "bottom" },
                             React.createElement("span", { className: "glyphicon glyphicon-tint" }),
                             " ",
                             React.createElement("span", { className: "ATable-label" }, "Hydropathy")),
-                        React.createElement("th", { title: "Charge", className: "col col-5 ATable-header-charge" },
+                        React.createElement("th", { title: "Charge", className: "col col-5 ATable-header-charge init-agp-tooltip", "data-toggle": "tooltip", "data-placement": "bottom" },
                             React.createElement("span", { className: "glyphicon glyphicon-flash" }),
                             " ",
                             React.createElement("span", { className: "ATable-label" }, "Charge")),
-                        React.createElement("th", { title: "Polarity", className: "col col-6 ATable-header-polarity" },
+                        React.createElement("th", { title: Tooltips.getMessageOrLeaveText("tooltip-Polarity"), className: "col col-6 ATable-header-polarity init-agp-tooltip", "data-toggle": "tooltip", "data-placement": "bottom" },
                             React.createElement("span", { className: "glyphicon glyphicon-plus" }),
                             " ",
                             React.createElement("span", { className: "ATable-label" }, "Polarity")),
-                        React.createElement("th", { title: "Mutability", className: "col col-7 ATable-header-mutability" },
+                        React.createElement("th", { title: Tooltips.getMessageOrLeaveText("tooltip-Mutability"), className: "col col-7 ATable-header-mutability init-agp-tooltip", "data-toggle": "tooltip", "data-placement": "bottom" },
                             React.createElement("span", { className: "glyphicon glyphicon-scissors" }),
                             " ",
                             React.createElement("span", { className: "ATable-label" }, "Mutability")))));
@@ -4035,7 +4198,7 @@ var LayerProperties;
                             "Charge"), React.createElement("span", null, charge)] }));
                 rows.push(React.createElement(DGComponents.DGElementRow, { columns: [React.createElement("span", null,
                             React.createElement("span", { className: "icon bottleneck black properties-icon" }),
-                            "MinRadius"), React.createElement("span", null, CommonUtils.Numbers.roundToDecimal(minRadius, 1))] }));
+                            "Radius"), React.createElement("span", null, CommonUtils.Numbers.roundToDecimal(minRadius, 1))] }));
                 rows.push(React.createElement(DGComponents.DGRowEmpty, { columnsCount: DGTABLE_COLS_COUNT }));
                 return rows;
             };
@@ -4434,8 +4597,8 @@ var ResidueAnnotations;
                     }
                 };
                 var this_1 = this;
-                for (var _i = 0, residues_1 = residues; _i < residues_1.length; _i++) {
-                    var residueId = residues_1[_i];
+                for (var _i = 0, residues_2 = residues; _i < residues_2.length; _i++) {
+                    var residueId = residues_2[_i];
                     _loop_1(residueId);
                 }
                 rows.push(React.createElement(DGComponents.DGRowEmpty, { columnsCount: DGTABLE_COLS_COUNT }));
@@ -4637,6 +4800,197 @@ var ProteinAnnotations;
         }(React.Component));
     })(UI = ProteinAnnotations.UI || (ProteinAnnotations.UI = {}));
 })(ProteinAnnotations || (ProteinAnnotations = {}));
+var LiningResidues;
+(function (LiningResidues) {
+    var UI;
+    (function (UI) {
+        var DGComponents = Datagrid.Components;
+        var React = LiteMol.Plugin.React;
+        var LiteMoleEvent = LiteMol.Bootstrap.Event;
+        var DGTABLE_COLS_COUNT = 1;
+        var NO_DATA_MESSAGE = "Select channel in 3D view for details...";
+        ;
+        ;
+        function render(target, plugin) {
+            LiteMol.Plugin.ReactDOM.render(React.createElement(App, { controller: plugin }), target);
+        }
+        UI.render = render;
+        var App = (function (_super) {
+            __extends(App, _super);
+            function App() {
+                var _this = _super !== null && _super.apply(this, arguments) || this;
+                _this.interactionEventStream = void 0;
+                _this.state = {
+                    data: null,
+                    app: _this,
+                };
+                _this.layerIdx = -1;
+                return _this;
+            }
+            App.prototype.componentDidMount = function () {
+                var _this = this;
+                var interactionHandler = function showInteraction(type, i, app) {
+                    if (!i || i.source == null || i.source.props.tag === void 0 || i.source.props.tag.type === void 0) {
+                        return;
+                    }
+                    if (i.source.props.tag.type == "Tunnel"
+                        || i.source.props.tag.type == "Path"
+                        || i.source.props.tag.type == "Pore"
+                        || i.source.props.tag.type == "MergedPore") {
+                        var layers = i.source.props.tag.element.Layers;
+                        app.setState({ data: layers.ResidueFlow });
+                        setTimeout(function () {
+                            $(window).trigger('contentResize');
+                        }, 1);
+                    }
+                };
+                this.interactionEventStream = LiteMoleEvent.Visual.VisualSelectElement.getStream(this.props.controller.context)
+                    .subscribe(function (e) { return interactionHandler('select', e.data, _this); });
+            };
+            App.prototype.componentWillUnmount = function () {
+            };
+            App.prototype.render = function () {
+                if (this.state.data !== null) {
+                    return (React.createElement("div", null,
+                        React.createElement(DGTable, __assign({}, this.state)),
+                        React.createElement(Controls, __assign({}, this.state))));
+                }
+                return React.createElement("div", null,
+                    React.createElement(DGNoData, __assign({}, this.state)));
+            };
+            return App;
+        }(React.Component));
+        UI.App = App;
+        function residueStringToResidueLight(residue) {
+            /*
+            [0 , 1 ,2 ,  3   ]
+            VAL 647 A Backbone
+            */
+            var residueParts = residue.split(" ");
+            var rv = {
+                authSeqNumber: Number(residueParts[1]),
+                chain: {
+                    authAsymId: residueParts[2]
+                }
+            };
+            return rv;
+        }
+        var Controls = (function (_super) {
+            __extends(Controls, _super);
+            function Controls() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            Controls.prototype.clearSelection = function () {
+                CommonUtils.Selection.SelectionHelper.clearSelection(this.props.app.props.controller);
+            };
+            Controls.prototype.selectAll = function () {
+                var residues = [];
+                if (this.props.app.state.data === null) {
+                    return;
+                }
+                for (var _i = 0, _a = this.props.app.state.data; _i < _a.length; _i++) {
+                    var residue = _a[_i];
+                    residues.push(residueStringToResidueLight(residue));
+                }
+                if (!CommonUtils.Selection.SelectionHelper.isBulkResiduesSelected(residues)) {
+                    CommonUtils.Selection.SelectionHelper.selectResiduesBulkWithBallsAndSticks(this.props.app.props.controller, residues);
+                }
+            };
+            Controls.prototype.render = function () {
+                return React.createElement("div", { className: "lining-residues select-controls" },
+                    React.createElement("span", { className: "btn-xs btn-default bt-all hand", onClick: this.selectAll.bind(this) }, "Select all"),
+                    React.createElement("span", { className: "btn-xs btn-default bt-none hand", onClick: this.clearSelection.bind(this) }, "Clear selection"));
+            };
+            return Controls;
+        }(React.Component));
+        var DGNoData = (function (_super) {
+            __extends(DGNoData, _super);
+            function DGNoData() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            DGNoData.prototype.render = function () {
+                return (React.createElement("div", { className: "datagrid", id: "dg-lining-residues" },
+                    React.createElement("div", { className: "header" },
+                        React.createElement(DGHead, __assign({}, this.props))),
+                    React.createElement("div", { className: "body" },
+                        React.createElement("table", null,
+                            React.createElement(DGComponents.DGNoDataInfoRow, { columnsCount: DGTABLE_COLS_COUNT, infoText: NO_DATA_MESSAGE }),
+                            React.createElement(DGComponents.DGRowEmpty, { columnsCount: DGTABLE_COLS_COUNT })))));
+            };
+            return DGNoData;
+        }(React.Component));
+        var DGTable = (function (_super) {
+            __extends(DGTable, _super);
+            function DGTable() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            DGTable.prototype.render = function () {
+                return (React.createElement("div", { className: "datagrid", id: "dg-lining-residues" },
+                    React.createElement("div", { className: "header" },
+                        React.createElement(DGHead, __assign({}, this.props))),
+                    React.createElement("div", { className: "body" },
+                        React.createElement(DGBody, __assign({}, this.props)))));
+            };
+            return DGTable;
+        }(React.Component));
+        var DGHead = (function (_super) {
+            __extends(DGHead, _super);
+            function DGHead() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            DGHead.prototype.render = function () {
+                return (React.createElement("table", null,
+                    React.createElement("tr", null,
+                        React.createElement("th", { title: "Residue", className: "col col-1" }, "Residue"))));
+            };
+            ;
+            return DGHead;
+        }(React.Component));
+        var DGBody = (function (_super) {
+            __extends(DGBody, _super);
+            function DGBody() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            DGBody.prototype.shortenBackbone = function (residue) {
+                return residue.replace(/Backbone/g, '');
+            };
+            DGBody.prototype.isBackbone = function (residue) {
+                return residue.indexOf("Backbone") >= 0;
+            };
+            DGBody.prototype.selectResidue = function (residue) {
+                var residueLightEntity = residueStringToResidueLight(residue);
+                if (!CommonUtils.Selection.SelectionHelper.isSelectedLight(residueLightEntity)) {
+                    CommonUtils.Selection.SelectionHelper.selectResidueByAuthAsymIdAndAuthSeqNumberWithBallsAndSticks(this.props.app.props.controller, residueLightEntity);
+                }
+            };
+            DGBody.prototype.getSelect3DLink = function (residue) {
+                var _this = this;
+                var residueEl = (this.isBackbone(residue)) ? React.createElement("i", null,
+                    React.createElement("strong", null, this.shortenBackbone(residue))) : React.createElement("span", null, residue);
+                return React.createElement("a", { className: "hand", onClick: function (e) { _this.selectResidue(residue); } }, residueEl);
+            };
+            DGBody.prototype.generateRows = function () {
+                if (this.props.data === null) {
+                    return React.createElement(DGComponents.DGNoDataInfoRow, { columnsCount: DGTABLE_COLS_COUNT, infoText: NO_DATA_MESSAGE });
+                }
+                var rows = [];
+                for (var _i = 0, _a = this.props.data; _i < _a.length; _i++) {
+                    var residue = _a[_i];
+                    var residueId = residue.split(" ").slice(1, 3).join(" ");
+                    rows.push(React.createElement(DGComponents.DGElementRow, { columns: [this.getSelect3DLink(residue)], title: [(this.isBackbone(residue) ? residue : "")], trClass: (this.isBackbone(residue) ? "help" : "") }));
+                }
+                rows.push(React.createElement(DGComponents.DGRowEmpty, { columnsCount: DGTABLE_COLS_COUNT }));
+                return rows;
+            };
+            DGBody.prototype.render = function () {
+                var rows = this.generateRows();
+                return (React.createElement("table", null, rows));
+            };
+            ;
+            return DGBody;
+        }(React.Component));
+    })(UI = LiningResidues.UI || (LiningResidues.UI = {}));
+})(LiningResidues || (LiningResidues = {}));
 var DownloadReport;
 (function (DownloadReport) {
     var UI;
@@ -4737,9 +5091,12 @@ var PdbIdSign;
             App.prototype.componentWillUnmount = function () {
             };
             App.prototype.render = function () {
+                var pdbid = SimpleRouter.GlobalRouter.getCurrentPid();
                 return React.createElement("div", null,
-                    "PDB id: ",
-                    React.createElement("b", null, SimpleRouter.GlobalRouter.getCurrentPid()));
+                    React.createElement("a", { href: "https://pdbe.org/" + pdbid, target: "_blank" },
+                        pdbid,
+                        " ",
+                        React.createElement("span", { className: "glyphicon glyphicon-new-window href-ico" })));
             };
             return App;
         }(React.Component));
@@ -4940,6 +5297,11 @@ var LiteMol;
             (function (State) {
                 var _this = this;
                 var Transformer = LiteMol.Bootstrap.Entity.Transformer;
+                var COORDINATE_SERVERS = {
+                    "ebi-http": "http://www.ebi.ac.uk/pdbe/coordinates",
+                    "ceitec-https": "https://webchem.ncbr.muni.cz/CoordinateServer"
+                };
+                var COORDINATE_SERVER = "ceitec-https";
                 function showDefaultVisuals(plugin, data, channelCount) {
                     return new LiteMol.Promise(function (res) {
                         var toShow = [];
@@ -4987,7 +5349,7 @@ var LiteMol;
                             else {
                                 var assemblyId = parsedData.props.data.AssemblyID;
                                 var model = plugin.createTransform()
-                                    .add(plugin.root, Transformer.Data.Download, { url: "http://www.ebi.ac.uk/pdbe/coordinates/" + pdbId + "/assembly?id=" + assemblyId, type: 'String', id: pdbId })
+                                    .add(plugin.root, Transformer.Data.Download, { url: COORDINATE_SERVERS[COORDINATE_SERVER] + "/" + pdbId + "/assembly?id=" + assemblyId, type: 'String', id: pdbId })
                                     .then(Transformer.Molecule.CreateFromData, { format: LiteMol.Core.Formats.Molecule.SupportedFormats.mmCIF }, { isBinding: true })
                                     .then(Transformer.Molecule.CreateModel, { modelIndex: 0 })
                                     .then(Transformer.Molecule.CreateMacromoleculeVisual, { polymer: true, polymerRef: 'polymer-visual', het: true });
@@ -5637,6 +5999,9 @@ var LiteMol;
                         CommonUtils.Selection.SelectionHelper.attachOnResidueLightSelectHandler((function (r) {
                             _this.setState({ label: r.authSeqNumber + " " + r.chain.authAsymId });
                         }).bind(this));
+                        CommonUtils.Selection.SelectionHelper.attachOnResidueBulkSelectHandler((function (r) {
+                            _this.setState({ label: void 0 });
+                        }).bind(this));
                         this.observer = this.props.plugin.subscribe(LiteMol.Bootstrap.Event.Molecule.ModelSelect, function (e) {
                             if (e.data) {
                                 var r = e.data.residues[0];
@@ -5691,7 +6056,7 @@ var LiteMol;
                         return React.createElement("div", null,
                             React.createElement("div", { className: "ui-selection-header" }, "Selection"),
                             React.createElement("div", { className: "ui-selection" }, !this.state.label
-                                ? React.createElement("i", null, "Click on atom residue or channel")
+                                ? React.createElement("i", null, "Click on residue or channel")
                                 : this.state.label));
                     };
                     return Selection;
@@ -5815,8 +6180,8 @@ var LiteMol;
                         var _this = this;
                         return React.createElement(Section, { header: this.props.header, count: (this.props.channels || '').length },
                             React.createElement("div", { className: 'ui-show-all' },
-                                React.createElement("button", { className: "btn btn-primary btn-xs", onClick: function () { return _this.show(true); }, disabled: this.state.isBusy || this.isDisabled() }, "All"),
-                                React.createElement("button", { className: "btn btn-primary btn-xs", onClick: function () { return _this.show(false); }, disabled: this.state.isBusy || this.isDisabled() }, "None")),
+                                React.createElement("button", { className: "btn btn-primary btn-xs bt-all", onClick: function () { return _this.show(true); }, disabled: this.state.isBusy || this.isDisabled() }, "All"),
+                                React.createElement("button", { className: "btn btn-primary btn-xs bt-none", onClick: function () { return _this.show(false); }, disabled: this.state.isBusy || this.isDisabled() }, "None")),
                             this.props.channels && this.props.channels.length > 0
                                 ? this.props.channels.map(function (c, i) { return React.createElement(Channel, { key: i, channel: c, state: _this.props.state }); })
                                 : React.createElement("div", { className: "ui-label ui-no-data-available" }, "No data available..."));
@@ -6126,6 +6491,7 @@ var LiteMol;
                 LayerProperties.UI.render(document.getElementById("layer-properties"), plugin);
                 //LayerResidues.UI.render(document.getElementById("right-tabs-2") !, plugin);
                 LayerResidues.UI.render(document.getElementById("layer-residues"), plugin);
+                LiningResidues.UI.render(document.getElementById("right-tabs-2"), plugin);
                 ResidueAnnotations.UI.render(document.getElementById("right-tabs-3"), plugin);
                 ProteinAnnotations.UI.render(document.getElementById("right-panel-tabs-1"), plugin);
                 DownloadReport.UI.render(document.getElementById("download-report"));

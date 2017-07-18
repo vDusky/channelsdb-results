@@ -16,8 +16,9 @@ namespace PdbIdSign.UI{
         }
 
         render() {
+            let pdbid = SimpleRouter.GlobalRouter.getCurrentPid();
             return <div>
-                PDB id: <b>{SimpleRouter.GlobalRouter.getCurrentPid()}</b>
+                <a href={`https://pdbe.org/${pdbid}`} target="_blank">{pdbid} <span className="glyphicon glyphicon-new-window href-ico"></span></a>
             </div>
         }
     }  

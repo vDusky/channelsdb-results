@@ -11,6 +11,8 @@ namespace LayersVizualizer.UI{
     import Transform = Tree.Transform;   
     import Visualization = LiteMol.Bootstrap.Visualization;   
 
+    import Tooltips = CommonUtils.Tooltips;
+
     declare function $(p:any): any;
 
     interface ChannelEventInfo { 
@@ -34,6 +36,7 @@ namespace LayersVizualizer.UI{
     export class App extends React.Component<{ vizualizer: Vizualizer, controller: LiteMol.Plugin.Controller }, State> {
 
         private interactionEventStream: LiteMol.Bootstrap.Rx.IDisposable | undefined = void 0;
+        private tooltipsInitialized:boolean = false;
 
         state = {
             instanceId: -1,
@@ -111,6 +114,7 @@ namespace LayersVizualizer.UI{
 
         render() {
             if (this.state.hasData) {
+                $('.init-lvz-tooltip').tooltip();
                 return <PaintingArea {...this.state} />
             } 
             
@@ -162,7 +166,21 @@ namespace LayersVizualizer.UI{
             );
         }
     }
+/*
+    function getMessageOrLeaveText(text:string){
+        let message = StaticData.Messages.get(text);
+        if(message === void 0){
+            return text;
+        }
 
+        return message;
+    }
+
+    function hasTooltipText(messageKey:string){
+        let message = StaticData.Messages.get(`tooltip-${messageKey}`);
+        return (message !== void 0);
+    }
+*/
     class ColorMenuItem extends React.Component<State & {propertyName:string, isCustom:boolean},{}>{
         private changeColoringProperty(e: React.MouseEvent<HTMLAreaElement>){
             let targetElement = (e.target as HTMLElement);
@@ -195,9 +213,16 @@ namespace LayersVizualizer.UI{
         }
 
         render(){
-            return(
-                <li><a data-instanceidx={this.props.instanceId} data-propertyname={this.props.propertyName} onClick={this.changeColoringProperty.bind(this)}>{this.props.propertyName}</a></li>
-            );
+            if(Tooltips.hasTooltipText(this.props.propertyName)){
+                return(
+                    <li><a data-instanceidx={this.props.instanceId} data-propertyname={this.props.propertyName} data-toggle="tooltip" data-placement="right" title={Tooltips.getMessageOrLeaveText(`tooltip-${this.props.propertyName}`)} className="init-lvz-tooltip lvz-properties" onClick={this.changeColoringProperty.bind(this)}>{Tooltips.getMessageOrLeaveText(this.props.propertyName)}</a></li>
+                );
+            }
+            else{
+                return(
+                    <li><a data-instanceidx={this.props.instanceId} data-propertyname={this.props.propertyName} onClick={this.changeColoringProperty.bind(this)}>{Tooltips.getMessageOrLeaveText(this.props.propertyName)}</a></li>
+                );
+            }
         }
     }
 
@@ -230,9 +255,16 @@ namespace LayersVizualizer.UI{
         }
 
         render(){
-            return(
-                <li><a data-instanceidx={this.props.instanceId} data-propertyname={this.props.propertyName} onClick={this.changeRadiusProperty.bind(this)}>{this.props.propertyName}</a></li>
-            );
+            if(Tooltips.hasTooltipText(this.props.propertyName)){
+                return(
+                    <li><a data-instanceidx={this.props.instanceId} data-propertyname={this.props.propertyName} data-toggle="tooltip" data-placement="right" title={Tooltips.getMessageOrLeaveText(`tooltip-${this.props.propertyName}`)} className="init-lvz-tooltip lvz-radius" onClick={this.changeRadiusProperty.bind(this)}>{Tooltips.getMessageOrLeaveText(this.props.propertyName)}</a></li>
+                );
+            }
+            else{
+                return(
+                    <li><a data-instanceidx={this.props.instanceId} data-propertyname={this.props.propertyName} onClick={this.changeRadiusProperty.bind(this)}>{Tooltips.getMessageOrLeaveText(this.props.propertyName)}</a></li>
+                );
+            }
         }
     }
 
@@ -305,7 +337,7 @@ namespace LayersVizualizer.UI{
                 );
             }
 
-            return <BootstrapDropUpMenuButton items={rv} label={this.props.coloringProperty} />
+            return <BootstrapDropUpMenuButton items={rv} label={Tooltips.getMessageOrLeaveText(this.props.coloringProperty)} />
         }
 
         render(){
@@ -328,7 +360,7 @@ namespace LayersVizualizer.UI{
                 );
             }
 
-            return <BootstrapDropUpMenuButton items={rv} label={this.props.radiusProperty} />
+            return <BootstrapDropUpMenuButton items={rv} label={Tooltips.getMessageOrLeaveText(this.props.radiusProperty)} />
         }
 
         render(){

@@ -153,6 +153,9 @@ namespace LiteMol.Example.Channels.UI {
             CommonUtils.Selection.SelectionHelper.attachOnResidueLightSelectHandler(((r:CommonUtils.Selection.LightResidueInfo)=>{
                 this.setState({ label: `${r.authSeqNumber} ${r.chain.authAsymId}`});
             }).bind(this));
+            CommonUtils.Selection.SelectionHelper.attachOnResidueBulkSelectHandler(((r:CommonUtils.Selection.LightResidueInfo)=>{
+                this.setState({ label: void 0});
+            }).bind(this));
 
             this.observer = this.props.plugin.subscribe(Bootstrap.Event.Molecule.ModelSelect, e => {
                 if (e.data) {
@@ -207,7 +210,7 @@ namespace LiteMol.Example.Channels.UI {
             return <div>
                 <div className="ui-selection-header">Selection</div>  
                 <div className="ui-selection">{ !this.state.label 
-                    ? <i>Click on atom residue or channel</i>
+                    ? <i>Click on residue or channel</i>
                     : this.state.label}
                 </div>
             </div>
@@ -306,7 +309,7 @@ namespace LiteMol.Example.Channels.UI {
 
         render() {
             return <Section header={this.props.header} count={(this.props.channels || '').length}>
-                <div className='ui-show-all'><button className="btn btn-primary btn-xs" onClick={() => this.show(true)} disabled={this.state.isBusy||this.isDisabled()}>All</button><button className="btn btn-primary btn-xs" onClick={() => this.show(false)} disabled={this.state.isBusy||this.isDisabled()}>None</button></div>
+                <div className='ui-show-all'><button className="btn btn-primary btn-xs bt-all" onClick={() => this.show(true)} disabled={this.state.isBusy||this.isDisabled()}>All</button><button className="btn btn-primary btn-xs bt-none" onClick={() => this.show(false)} disabled={this.state.isBusy||this.isDisabled()}>None</button></div>
                 { this.props.channels && this.props.channels.length > 0
                     ? this.props.channels.map((c, i) => <Channel key={i} channel={c} state={this.props.state} />)
                     : <div className="ui-label ui-no-data-available">No data available...</div>}

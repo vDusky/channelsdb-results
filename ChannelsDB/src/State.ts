@@ -11,6 +11,13 @@ namespace LiteMol.Example.Channels.State {
 
     export interface SurfaceTag { type: string, element?: any }
 
+    let COORDINATE_SERVERS:any = {
+        "ebi-http":"http://www.ebi.ac.uk/pdbe/coordinates",
+        "ceitec-https":"https://webchem.ncbr.muni.cz/CoordinateServer"
+    };
+
+    let COORDINATE_SERVER = "ceitec-https";
+
     function showDefaultVisuals(plugin: Plugin.Controller, data: any, channelCount: number) {
         return new Promise(res => {
             let toShow = [];
@@ -62,7 +69,7 @@ namespace LiteMol.Example.Channels.State {
                         let assemblyId = parsedData.props.data.AssemblyID as number;
 
                         let model = plugin.createTransform()
-                            .add(plugin.root, Transformer.Data.Download, { url: `http://www.ebi.ac.uk/pdbe/coordinates/${pdbId}/assembly?id=${assemblyId}`, type: 'String', id: pdbId })
+                            .add(plugin.root, Transformer.Data.Download, { url: `${COORDINATE_SERVERS[COORDINATE_SERVER]}/${pdbId}/assembly?id=${assemblyId}`, type: 'String', id: pdbId })
                             .then(Transformer.Molecule.CreateFromData, { format: Core.Formats.Molecule.SupportedFormats.mmCIF }, { isBinding: true })
                             .then(Transformer.Molecule.CreateModel, { modelIndex: 0 })
                             .then(Transformer.Molecule.CreateMacromoleculeVisual, { polymer: true, polymerRef: 'polymer-visual', het: true });

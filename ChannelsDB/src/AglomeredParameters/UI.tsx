@@ -4,6 +4,8 @@ namespace AglomeredParameters.UI{
     import LiteMoleEvent = LiteMol.Bootstrap.Event;
 
     import DGComponents = Datagrid.Components;
+
+    import Tooltips = CommonUtils.Tooltips;
     
     let DGTABLE_COLS_COUNT = 7;
 
@@ -63,6 +65,7 @@ namespace AglomeredParameters.UI{
 
         render() {
             if (this.state.data !== null) {
+                $('.init-agp-tooltip').tooltip({container:'body'});
                 return(
                     <div>
                         <DGTable {...this.state} />
@@ -92,25 +95,25 @@ namespace AglomeredParameters.UI{
             return(
                 <table>
                     <tr>
-                        <th title="Identifier" className="col col-1 ATable-header-identifier">
+                        <th title="Name" className="col col-1 ATable-header-identifier init-agp-tooltip" data-toggle="tooltip" data-placement="bottom">
                             Name
                         </th>
-                        <th title="Length" className="col col-2 ATable-header-length">
+                        <th title={Tooltips.getMessageOrLeaveText("tooltip-Length")} className="col col-2 ATable-header-length init-agp-tooltip" data-toggle="tooltip" data-placement="bottom">
                             <span className="glyphicon glyphicon-resize-horizontal" /> <span className="ATable-label">Length</span>
                         </th>
-                        <th title="Bottleneck" className="col col-3 ATable-header-bottleneck">
+                        <th title={Tooltips.getMessageOrLeaveText("tooltip-Bottleneck")} className="col col-3 ATable-header-bottleneck init-agp-tooltip" data-toggle="tooltip" data-placement="bottom">
                             <span className="icon bottleneck" /> <span className="ATable-label">Bottleneck</span>
                         </th>
-                        <th title="Hydropathy" className="col col-4 ATable-header-hydropathy">
+                        <th title={Tooltips.getMessageOrLeaveText("tooltip-Hydropathy")} className="col col-4 ATable-header-hydropathy init-agp-tooltip" data-toggle="tooltip" data-placement="bottom">
                             <span className="glyphicon glyphicon-tint" /> <span className="ATable-label">Hydropathy</span>
                         </th>
-                        <th title="Charge" className="col col-5 ATable-header-charge">
+                        <th title="Charge" className="col col-5 ATable-header-charge init-agp-tooltip" data-toggle="tooltip" data-placement="bottom">
                             <span className="glyphicon glyphicon-flash" /> <span className="ATable-label">Charge</span>
                         </th>
-                        <th title="Polarity" className="col col-6 ATable-header-polarity">
+                        <th title={Tooltips.getMessageOrLeaveText("tooltip-Polarity")} className="col col-6 ATable-header-polarity init-agp-tooltip" data-toggle="tooltip" data-placement="bottom">
                             <span className="glyphicon glyphicon-plus" /> <span className="ATable-label">Polarity</span>
                         </th>
-                        <th title="Mutability" className="col col-7 ATable-header-mutability">
+                        <th title={Tooltips.getMessageOrLeaveText("tooltip-Mutability")} className="col col-7 ATable-header-mutability init-agp-tooltip" data-toggle="tooltip" data-placement="bottom">
                             <span className="glyphicon glyphicon-scissors" /> <span className="ATable-label">Mutability</span>
                         </th>                     
                     </tr>

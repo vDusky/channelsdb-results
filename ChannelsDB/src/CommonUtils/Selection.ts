@@ -35,9 +35,11 @@ namespace CommonUtils.Selection{
 
         private static selectedResidue:ResidueLight|Residue|undefined;
         private static selectedChannelRef: string|undefined;
+        private static selectedBulkResidues:LightResidueInfo[]|undefined;
 
         private static onResidueSelectHandlers:{handler:(residue:LiteMol.Bootstrap.Interactivity.Molecule.ResidueInfo)=>void}[];
         private static onResidueLightSelectHandlers:{handler:(residue:LightResidueInfo)=>void}[];
+        private static onResidueBulkSelectHandlers:{handler:(residues:LightResidueInfo[])=>void}[];
 
         public static attachOnResidueSelectHandler(handler:(residue:LiteMol.Bootstrap.Interactivity.Molecule.ResidueInfo)=>void){
             if(this.onResidueSelectHandlers===void 0){
@@ -73,11 +75,36 @@ namespace CommonUtils.Selection{
             }
         }
 
+        public static attachOnResidueBulkSelectHandler(handler:(residues:LightResidueInfo[])=>void){
+            if(this.onResidueBulkSelectHandlers===void 0){
+                this.onResidueBulkSelectHandlers = [];
+            }
+
+            this.onResidueBulkSelectHandlers.push({handler});
+        }
+        private static invokeOnResidueBulkSelectHandlers(residues:LightResidueInfo[]){
+            if(this.onResidueBulkSelectHandlers === void 0){
+                return;
+            }
+
+            for(let h of this.onResidueBulkSelectHandlers){
+                h.handler(residues);
+            }
+        }
+
         public static getSelectionVisualRef(){
             return this.SELECTION_VISUAL_REF;
         }
 
         public static clearSelection(plugin:LiteMol.Plugin.Controller){
+            this.clearSelectionPrivate(plugin);
+            this.selectedBulkResidues = void 0;
+            this.selectedResidue = void 0;
+            this.selectedChannelRef = void 0;
+            this.resetScene(plugin);
+        }
+
+        private static clearSelectionPrivate(plugin:LiteMol.Plugin.Controller){
             LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(plugin.context, this.SELECTION_VISUAL_REF);
             setTimeout(() => LiteMol.Bootstrap.Event.Visual.VisualSelectElement.dispatch(plugin.context, LiteMol.Bootstrap.Interactivity.Info.empty), 0);
         }
@@ -118,6 +145,79 @@ namespace CommonUtils.Selection{
             return true;
         }
 
+        private static residueBulkSort(bulk: LightResidueInfo[]){
+            bulk.sort((a,b)=>{
+                if(a.chain.authAsymId<b.chain.authAsymId){
+                    return -1;  
+                }
+                else if(a.chain.authAsymId==b.chain.authAsymId){
+                    return a.authSeqNumber-b.authSeqNumber;
+                }
+                else{
+                    return 1;
+                }
+            });
+        }
+
+        private static residueBulkEquals(r1:LightResidueInfo[],r2:LightResidueInfo[]){
+            if(r1.length!==r2.length){
+                return false;
+            }
+
+            this.residueBulkSort(r1);
+            this.residueBulkSort(r2);
+
+            for(let idx=0;idx<r1.length;idx++){
+                if(this.residueLightEquals({type:"light",info:r1[idx]},{type:"light",info:r2[idx]})){
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public static selectResiduesBulkWithBallsAndSticks(plugin:LiteMol.Plugin.Controller,residues:LightResidueInfo[]){
+            CommonUtils.Selection.SelectionHelper.clearSelectionPrivate(plugin);
+            this.selectedChannelRef = void 0;
+            this.selectedBulkResidues = void 0;
+            this.resetScene(plugin);
+
+            if(this.selectedBulkResidues!==void 0){
+                if(this.residueBulkEquals(residues,this.selectedBulkResidues)){
+                    this.selectedResidue = undefined;
+                    return;
+                }
+            }
+
+            let queries = [];
+            for(let residue of residues){
+                queries.push(
+                    LiteMol.Core.Structure.Query.chainsById(...[residue.chain.authAsymId]).intersectWith(
+                        LiteMol.Core.Structure.Query.residues(
+                            ...[{authSeqNumber:residue.authSeqNumber}]
+                        )
+                    ).compile()
+                );
+            }
+
+            let query = LiteMol.Core.Structure.Query.or(...queries);
+
+            let t = plugin.createTransform();
+            t.add('polymer-visual', Transformer.Molecule.CreateSelectionFromQuery, { query, name: 'Residues' }, { ref: CommonUtils.Selection.SelectionHelper.getSelectionVisualRef(), isHidden: true })
+                .then(Transformer.Molecule.CreateVisual, { style: LiteMol.Bootstrap.Visualization.Molecule.Default.ForType.get('BallsAndSticks') }, {isHidden:true});
+
+            plugin.applyTransform(t)
+                .then(()=>{
+                    LiteMol.Bootstrap.Command.Entity.Focus.dispatch(plugin.context, plugin.context.select(CommonUtils.Selection.SelectionHelper.getSelectionVisualRef()));
+                });   
+            this.selectedBulkResidues = residues;
+            this.invokeOnResidueBulkSelectHandlers(residues);
+        }
+
+        public static isBulkResiduesSelected(residues:LightResidueInfo[]):boolean{
+            return this.selectedBulkResidues !== void 0;
+        }
+
         public static selectResidueByAuthAsymIdAndAuthSeqNumberWithBallsAndSticks(plugin:LiteMol.Plugin.Controller,residue:LightResidueInfo){
             let query = LiteMol.Core.Structure.Query.chainsById(residue.chain.authAsymId).intersectWith(
                 LiteMol.Core.Structure.Query.residues(
@@ -125,7 +225,9 @@ namespace CommonUtils.Selection{
                 )
             );
 
-            CommonUtils.Selection.SelectionHelper.clearSelection(plugin);
+            CommonUtils.Selection.SelectionHelper.clearSelectionPrivate(plugin);
+            this.selectedChannelRef = void 0;
+            this.selectedBulkResidues = void 0;
             this.resetScene(plugin);
 
             if(this.selectedResidue!==void 0){
@@ -175,7 +277,7 @@ namespace CommonUtils.Selection{
         }
 
         public static isSelectedAny(){
-            return this.isSelectedAnyChannel() || this.selectedResidue !== void 0;
+            return this.isSelectedAnyChannel() || this.selectedResidue !== void 0 || this.selectedBulkResidues !== void 0;
         }
 
         public static selectResidueWithBallsAndSticks(plugin:LiteMol.Plugin.Controller,residue:LiteMol.Bootstrap.Interactivity.Molecule.ResidueInfo){
@@ -185,8 +287,9 @@ namespace CommonUtils.Selection{
                 )
             );
             
-            CommonUtils.Selection.SelectionHelper.clearSelection(plugin);
+            CommonUtils.Selection.SelectionHelper.clearSelectionPrivate(plugin);
             this.selectedChannelRef = void 0;
+            this.selectedBulkResidues = void 0;
             this.resetScene(plugin);
 
             if(this.selectedResidue!==void 0){
@@ -247,9 +350,15 @@ namespace CommonUtils.Selection{
                 this.selectedResidue = void 0;
             }
 
+            if(this.selectedBulkResidues !== void 0){
+                //console.log("selected channel - clearing residues");
+                LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(plugin.context, this.SELECTION_VISUAL_REF);
+                this.selectedBulkResidues = void 0;
+            }
+
             if((this.selectedChannelRef !== void 0)&&(this.selectedChannelRef === i.source.ref)){
                 //console.log("double clicked on tunel - deselecting");
-                this.clearSelection(plugin);
+                this.clearSelectionPrivate(plugin);
                 this.selectedChannelRef = void 0;
             }
             else{

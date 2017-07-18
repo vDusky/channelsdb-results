@@ -51,6 +51,7 @@ $( function() {
         fillSpaceOnResize("layer-properties","right-tabs-1","right-tabs",59);
         /*datagridOnResize("dg-layer-properties","right-tabs-1","right-tabs");
         datagridOnResize("dg-layer-residues","right-tabs-2","right-tabs");*/
+        datagridOnResize("dg-lining-residues","right-tabs-2","right-tabs");
         datagridOnResize("dg-layer-properties","layer-properties","layer-properties");
         datagridOnResize("dg-layer-residues","layer-residues","layer-residues");
         datagridOnResize("dg-residue-annotations","right-tabs-3","right-tabs");
@@ -65,6 +66,7 @@ $( function() {
     fillSpaceOnResize("layer-properties","right-tabs-1","right-tabs",59);
     /*datagridOnResize("dg-layer-properties","right-tabs-1","right-tabs");
     datagridOnResize("dg-layer-residues","right-tabs-2","right-tabs");*/
+    datagridOnResize("dg-lining-residues","right-tabs-2","right-tabs");
     datagridOnResize("dg-layer-properties","layer-properties","layer-properties");
     datagridOnResize("dg-layer-residues","layer-residues","layer-residues");
     datagridOnResize("dg-residue-annotations","right-tabs-3","right-tabs");

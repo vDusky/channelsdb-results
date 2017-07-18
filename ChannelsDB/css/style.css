@@ -588,6 +588,10 @@ span.ATable-label {
     background-image: url(../images/bottleneck-radius-black.png);
 }
 
+.chdb-panel.right-panel .bt-all{
+    margin-right:2px;
+}
+
 @media only screen and (max-width: 1360px){
     #dg-aglomered-parameters.datagrid .col.col-4{
         min-width:50px;

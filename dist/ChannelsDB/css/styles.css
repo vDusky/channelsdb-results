@@ -185,7 +185,7 @@
   margin-top: -3px; }
 
 .download-button {
-  width: 220px;
+  width: 175px;
   height: 32px;
   position: fixed;
   z-index: 900;
@@ -193,11 +193,12 @@
   text-align: center;
   font-size: 13pt;
   background-color: #f8f8f8;
-  left: 0px;
+  left: 140px;
   padding: 0;
   color: #777;
-  padding-left: 45px;
-  border-right: 1px #ccc solid; }
+  padding-right: 10px;
+  border-left: 1px #ccc solid;
+  border-bottom-right-radius: 30px; }
 
 button.download.dropdown-toggle {
   background-color: transparent;
@@ -414,7 +415,7 @@ button.download.dropdown-toggle {
     width: 100%; } }
 
 .current-pbdbid-sign {
-  width: 141px;
+  width: 140px;
   height: 32px;
   position: fixed;
   z-index: 900;
@@ -422,11 +423,17 @@ button.download.dropdown-toggle {
   text-align: center;
   font-size: 13pt;
   background-color: #f8f8f8;
-  border-bottom-right-radius: 30px;
-  left: 220px;
+  left: 0px;
   padding: 0;
   color: #777;
+  padding-left: 60px;
   padding-right: 10px; }
+
+.current-pbdbid-sign .href-ico {
+  font-size: 11pt; }
+
+.current-pbdbid-sign a {
+  color: #777; }
 
 /*!
  * Bootstrap v3.3.7 (http://getbootstrap.com)
@@ -7582,6 +7589,16 @@ a.ui-button:active,
   -webkit-box-shadow: 0px 0px 5px #666666;
   box-shadow: 0px 0px 5px #666666; }
 
+.lining-residues.select-controls {
+  position: absolute;
+  right: 0;
+  margin-right: 3px;
+  padding-top: 7px;
+  padding-right: 7px; }
+
+.lining-residues.select-controls .bt-all {
+  margin-right: 2px; }
+
 body {
   margin: 0;
   padding: 0;
@@ -8100,6 +8117,9 @@ span.ATable-label {
 .icon.bottleneck.black {
   background-image: url(../images/bottleneck-radius-black.png); }
 
+.chdb-panel.right-panel .bt-all {
+  margin-right: 2px; }
+
 @media only screen and (max-width: 1360px) {
   #dg-aglomered-parameters.datagrid .col.col-4 {
     min-width: 50px; }
@@ -8127,3 +8147,35 @@ span.ATable-label {
     width: 39%; }
   .right-tabs.bottom-tabs-toggled {
     width: 61%; } }
+
+.lvz-radius + .tooltip > .tooltip-inner,
+.lvz-properties + .tooltip > .tooltip-inner {
+  max-width: 420px;
+  min-width: 220px;
+  background-color: white;
+  color: black;
+  box-shadow: #ccc 0px 0px 1px; }
+
+.tooltip.in {
+  opacity: 1 !important; }
+
+.lvz-properties + .tooltip > .tooltip-inner {
+  width: 420px; }
+
+.lvz-radius + .tooltip.right > .tooltip-arrow,
+.lvz-properties + .tooltip.right > .tooltip-arrow {
+  border-right: 5px solid white; }
+
+.tooltip > .tooltip-inner {
+  max-height: 170px;
+  max-width: 400px;
+  /*  background-color:white;
+    color:black;
+    box-shadow: #ccc 0px 0px 1px;*/ }
+
+/*
+.tooltip.top > .tooltip-arrow,
+.tooltip.top > .tooltip-arrow{
+    border-top:5px solid white;
+}
+*/
