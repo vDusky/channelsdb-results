@@ -186,8 +186,8 @@ namespace LayerResidues.UI{
                 if(first === true){
                     first = false;
                     trs.push(
-                        <tr className={(this.isBackbone(residue)?"help":"")}>
-                            <td title={(this.isBackbone(residue)?residue:"")} className={`col col-1`} rowSpan={(annotations.length>1)?annotations.length:void 0}>
+                        <tr>
+                            <td title={(this.isBackbone(residue)?residue:"")} className={`col col-1 ${(this.isBackbone(residue)?"help":"")}`} rowSpan={(annotations.length>1)?annotations.length:void 0}>
                                 {residueNameEl}
                             </td>    
                             <td className={`col col-2`} >
@@ -229,7 +229,7 @@ namespace LayerResidues.UI{
                 if(annotation === void 0){
                     this.props.app.invokeDataWait();
                     rows.push(
-                        <DGComponents.DGElementRow columns={[residueNameEl,<span>Annotation data still loading...</span>]} title={[(this.isBackbone(residue)?residue:""),""]} trClass={(this.isBackbone(residue)?"help":"")} />
+                        <DGComponents.DGElementRow columns={[residueNameEl,<span>Annotation data still loading...</span>]} title={[(this.isBackbone(residue)?residue:""),(this.isBackbone(residue)?residue:"")]} trClass={(this.isBackbone(residue)?"help":"")} />
                     );
                 }
                 else if(annotation !== null && annotation.length>0){
@@ -239,7 +239,7 @@ namespace LayerResidues.UI{
                 }
                 else{
                     rows.push(
-                        <DGComponents.DGElementRow columns={[residueNameEl,<span/>]} title={[(this.isBackbone(residue)?residue:""),""]} trClass={(this.isBackbone(residue)?"help":"")} />
+                        <DGComponents.DGElementRow columns={[residueNameEl,<span/>]} title={[(this.isBackbone(residue)?residue:""),(this.isBackbone(residue)?residue:"")]} trClass={(this.isBackbone(residue)?"help":"")} />
                     );
                 }
             }            

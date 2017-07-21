@@ -7599,6 +7599,11 @@ a.ui-button:active,
 .lining-residues.select-controls .bt-all {
   margin-right: 2px; }
 
+#right-tabs-2 .datagrid .col.col-1,
+#right-tabs-2 .datagrid * .col.col-1 {
+  width: 18%;
+  min-width: 105px; }
+
 body {
   margin: 0;
   padding: 0;
@@ -8011,7 +8016,7 @@ only screen and (max-height: 600px) {
   font-size: 25pt; }
 
 .ui-selection {
-  height: 30px;
+  min-height: 30px;
   line-height: 30px; }
 
 .ui-header {

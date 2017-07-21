@@ -40,6 +40,7 @@ namespace CommonUtils.Selection{
         private static onResidueSelectHandlers:{handler:(residue:LiteMol.Bootstrap.Interactivity.Molecule.ResidueInfo)=>void}[];
         private static onResidueLightSelectHandlers:{handler:(residue:LightResidueInfo)=>void}[];
         private static onResidueBulkSelectHandlers:{handler:(residues:LightResidueInfo[])=>void}[];
+        private static onClearSelectionHandlers:{handler:()=>void}[];
 
         public static attachOnResidueSelectHandler(handler:(residue:LiteMol.Bootstrap.Interactivity.Molecule.ResidueInfo)=>void){
             if(this.onResidueSelectHandlers===void 0){
@@ -92,6 +93,23 @@ namespace CommonUtils.Selection{
             }
         }
 
+        public static attachOnClearSelectionHandler(handler:()=>void){
+            if(this.onClearSelectionHandlers===void 0){
+                this.onClearSelectionHandlers = [];
+            }
+
+            this.onClearSelectionHandlers.push({handler});
+        }
+        private static invokeOnClearSelectionHandlers(){
+            if(this.onClearSelectionHandlers === void 0){
+                return;
+            }
+
+            for(let h of this.onClearSelectionHandlers){
+                h.handler();
+            }
+        }
+
         public static getSelectionVisualRef(){
             return this.SELECTION_VISUAL_REF;
         }
@@ -106,7 +124,11 @@ namespace CommonUtils.Selection{
 
         private static clearSelectionPrivate(plugin:LiteMol.Plugin.Controller){
             LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(plugin.context, this.SELECTION_VISUAL_REF);
+            if(this.selectedChannelRef!==void 0){
+                deselectTunnelByRef(plugin,this.selectedChannelRef);
+            }
             setTimeout(() => LiteMol.Bootstrap.Event.Visual.VisualSelectElement.dispatch(plugin.context, LiteMol.Bootstrap.Interactivity.Info.empty), 0);
+            this.invokeOnClearSelectionHandlers();
         }
 
         public static resetScene(plugin:LiteMol.Plugin.Controller){
@@ -348,25 +370,57 @@ namespace CommonUtils.Selection{
                 //console.log("selected channel - clearing residues");
                 LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(plugin.context, this.SELECTION_VISUAL_REF);
                 this.selectedResidue = void 0;
+                return;
             }
 
             if(this.selectedBulkResidues !== void 0){
                 //console.log("selected channel - clearing residues");
                 LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(plugin.context, this.SELECTION_VISUAL_REF);
                 this.selectedBulkResidues = void 0;
+                return;
             }
 
             if((this.selectedChannelRef !== void 0)&&(this.selectedChannelRef === i.source.ref)){
                 //console.log("double clicked on tunel - deselecting");
                 this.clearSelectionPrivate(plugin);
                 this.selectedChannelRef = void 0;
+                return;
             }
             else{
+                //console.log("Channel selected");
+                if(this.selectedChannelRef!==void 0 && this.selectedChannelRef !== i.source.ref){
+                    deselectTunnelByRef(plugin,this.selectedChannelRef);    
+                }
                 this.selectedChannelRef = i.source.ref;
+                selectTunnelByRef(plugin,this.selectedChannelRef);
+                return;
             }
             
             //console.log("SelectionHelper: SelectEvent from code - ignoring ");
         }
 
+    }
+
+    function getIndices(v:LiteMol.Bootstrap.Entity.Visual.Any){
+        if((v as any).props.model.surface === void 0){
+            return [] as number[];
+        }
+        return (v as any).props.model.surface.triangleIndices;
+    }
+
+    function selectTunnelByRef(plugin:LiteMol.Plugin.Controller,ref:string){
+        let entities = plugin.selectEntities(ref);        
+        let v = <any>entities[0] as LiteMol.Bootstrap.Entity.Visual.Any;   
+        if (LiteMol.Bootstrap.Entity.isVisual(entities[0])&&v.props.isSelectable) {
+            v.props.model.applySelection(getIndices(v), LiteMol.Visualization.Selection.Action.Select);
+        }
+    }
+
+    function deselectTunnelByRef(plugin:LiteMol.Plugin.Controller,ref:string){
+        let entities = plugin.selectEntities(ref);        
+        let v = <any>entities[0] as LiteMol.Bootstrap.Entity.Visual.Any;   
+        if (LiteMol.Bootstrap.Entity.isVisual(entities[0])&&v.props.isSelectable) {
+            v.props.model.applySelection(getIndices(v), LiteMol.Visualization.Selection.Action.RemoveSelect);
+        }
     }
 }

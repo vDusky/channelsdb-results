@@ -153,7 +153,15 @@ namespace LiteMol.Example.Channels.UI {
             CommonUtils.Selection.SelectionHelper.attachOnResidueLightSelectHandler(((r:CommonUtils.Selection.LightResidueInfo)=>{
                 this.setState({ label: `${r.authSeqNumber} ${r.chain.authAsymId}`});
             }).bind(this));
-            CommonUtils.Selection.SelectionHelper.attachOnResidueBulkSelectHandler(((r:CommonUtils.Selection.LightResidueInfo)=>{
+            CommonUtils.Selection.SelectionHelper.attachOnResidueBulkSelectHandler(((r:CommonUtils.Selection.LightResidueInfo[])=>{    
+                let label = r.map((val,idx,array)=>{
+                    return `${val.authSeqNumber} ${val.chain.authAsymId}`;
+                }).reduce((prev,cur,idx,array)=>{
+                    return `${prev}${(idx===0)?'':', '}${cur}`;
+                });
+                this.setState({ label });
+            }).bind(this));
+            CommonUtils.Selection.SelectionHelper.attachOnClearSelectionHandler((()=>{
                 this.setState({ label: void 0});
             }).bind(this));
 
@@ -188,7 +196,8 @@ namespace LiteMol.Example.Channels.UI {
                         else{
                             this.setState({ label: <span><b>{annotation.text}</b>, Length: {len} Å</span> });
                         }
-                    }else if(!CommonUtils.Selection.SelectionHelper.isSelectedAny()){
+                    }
+                    else if(!CommonUtils.Selection.SelectionHelper.isSelectedAny()){
                         this.setState({ label: void 0})
                     }
                 }
@@ -347,7 +356,7 @@ namespace LiteMol.Example.Channels.UI {
                 return <Renderable annotations={annotations} label={<span><b><a onClick={this.selectChannel.bind(this)}>{annotation.text}</a></b>, Length: {len} Å</span>} element={c} toggle={State.showChannelVisuals} {...this.props.state} />
             }
             else{
-                return <Renderable label={<span><b>{c.Type}</b>, {`Length: ${len} Å`}</span>} element={c} toggle={State.showChannelVisuals} {...this.props.state} />
+                return <Renderable label={<span><b><a onClick={this.selectChannel.bind(this)}>{c.Type}</a></b>, {`Length: ${len} Å`}</span>} element={c} toggle={State.showChannelVisuals} {...this.props.state} />
             }
         }
 

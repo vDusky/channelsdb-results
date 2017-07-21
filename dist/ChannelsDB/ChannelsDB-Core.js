@@ -65,10 +65,14 @@ var StaticData;
             "tooltip-MinFreeRadius": "Radius of sphere within channel limited by three closest main chain atoms in order to allow sidechain flexibility",
             "tooltip-Bottleneck": "Radius of channel bottleneck",
             "tooltip-Length": "Length of the channel",
-            "tooltip-Hydropathy": "Average of hydropathy index per each amino acid according to Kyte and Doolittle J.Mol.Biol.(1982) 157, 105-132. Range from the most hydrophilic (Arg = -4.5) to the most hydrophobic (Ile = 4.5)",
-            "tooltip-Hydrophobicity": "Average of normalized hydrophobicity scales by Cid et al. J. Protein Engineering (1992) 5, 373-375. Range from the most hydrophilic (Glu = -1.140) to the most hydrophobic (Ile = 1.810)",
-            "tooltip-Polarity": "Average of lining amino acid polarities by Zimmermann et al. J. Theor. Biol. (1968) 21, 170-201. Polarity ranges from nonpolar (Ala, Gly = 0) tthrough polar (e.g. Ser = 1.67) to charged (Glu = 49.90, Arg = 52.00)",
-            "tooltip-Mutability": "Average of relative mutability index by Jones, D.T. et al. Compur. Appl. Biosci. (1992) 8(3): 275-282. Realtive mutability based on empirical substitution matrices between similar protein sequences. High for easily substitutable amino acids, e.g. polars (Ser = 117, Thr = 107, Asn = 104) or aliphatics (Ala = 100, Val = 98, Ile = 103). Low for important structural amino acids, e.g. aromatics (Trp = 25, Phe = 51, Tyr = 50) or specials (Cys = 44, Pro = 58, Gly = 50)."
+            "tooltip-Hydropathy": "Hydropathy index of amino acid according to Kyte and Doolittle J.Mol.Biol.(1982) 157, 105-132. Range from the most hydrophilic (Arg = -4.5) to the most hydrophobic (Ile = 4.5)",
+            "tooltip-Hydrophobicity": "Normalized hydrophobicity scale by Cid et al. J. Protein Engineering (1992) 5, 373-375. Range from the most hydrophilic (Glu = -1.140) to the most hydrophobic (Ile = 1.810)",
+            "tooltip-Polarity": "Lining amino acid polarity by Zimmermann et al. J. Theor. Biol. (1968) 21, 170-201. Polarity ranges from nonpolar (Ala, Gly = 0) tthrough polar (e.g. Ser = 1.67) to charged (Glu = 49.90, Arg = 52.00)",
+            "tooltip-Mutability": "Relative mutability index by Jones, D.T. et al. Compur. Appl. Biosci. (1992) 8(3): 275-282. Realtive mutability based on empirical substitution matrices between similar protein sequences. High for easily substitutable amino acids, e.g. polars (Ser = 117, Thr = 107, Asn = 104) or aliphatics (Ala = 100, Val = 98, Ile = 103). Low for important structural amino acids, e.g. aromatics (Trp = 25, Phe = 51, Tyr = 50) or specials (Cys = 44, Pro = 58, Gly = 50).",
+            "tooltip-agl-Hydropathy": "Average of hydropathy index per each amino acid according to Kyte and Doolittle J.Mol.Biol.(1982) 157, 105-132. Range from the most hydrophilic (Arg = -4.5) to the most hydrophobic (Ile = 4.5)",
+            "tooltip-agl-Hydrophobicity": "Average of normalized hydrophobicity scales by Cid et al. J. Protein Engineering (1992) 5, 373-375. Range from the most hydrophilic (Glu = -1.140) to the most hydrophobic (Ile = 1.810)",
+            "tooltip-agl-Polarity": "Average of lining amino acid polarities by Zimmermann et al. J. Theor. Biol. (1968) 21, 170-201. Polarity ranges from nonpolar (Ala, Gly = 0) tthrough polar (e.g. Ser = 1.67) to charged (Glu = 49.90, Arg = 52.00)",
+            "tooltip-agl-Mutability": "Average of relative mutability index by Jones, D.T. et al. Compur. Appl. Biosci. (1992) 8(3): 275-282. Realtive mutability based on empirical substitution matrices between similar protein sequences. High for easily substitutable amino acids, e.g. polars (Ser = 117, Thr = 107, Asn = 104) or aliphatics (Ala = 100, Val = 98, Ile = 103). Low for important structural amino acids, e.g. aromatics (Trp = 25, Phe = 51, Tyr = 50) or specials (Cys = 44, Pro = 58, Gly = 50)."
         };
         function get(messageKey) {
             return MESSAGES[messageKey];
@@ -236,6 +240,21 @@ var CommonUtils;
                     h.handler(residues);
                 }
             };
+            SelectionHelper.attachOnClearSelectionHandler = function (handler) {
+                if (this.onClearSelectionHandlers === void 0) {
+                    this.onClearSelectionHandlers = [];
+                }
+                this.onClearSelectionHandlers.push({ handler: handler });
+            };
+            SelectionHelper.invokeOnClearSelectionHandlers = function () {
+                if (this.onClearSelectionHandlers === void 0) {
+                    return;
+                }
+                for (var _i = 0, _a = this.onClearSelectionHandlers; _i < _a.length; _i++) {
+                    var h = _a[_i];
+                    h.handler();
+                }
+            };
             SelectionHelper.getSelectionVisualRef = function () {
                 return this.SELECTION_VISUAL_REF;
             };
@@ -248,7 +267,11 @@ var CommonUtils;
             };
             SelectionHelper.clearSelectionPrivate = function (plugin) {
                 LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(plugin.context, this.SELECTION_VISUAL_REF);
+                if (this.selectedChannelRef !== void 0) {
+                    deselectTunnelByRef(plugin, this.selectedChannelRef);
+                }
                 setTimeout(function () { return LiteMol.Bootstrap.Event.Visual.VisualSelectElement.dispatch(plugin.context, LiteMol.Bootstrap.Interactivity.Info.empty); }, 0);
+                this.invokeOnClearSelectionHandlers();
             };
             SelectionHelper.resetScene = function (plugin) {
                 LiteMol.Bootstrap.Command.Visual.ResetScene.dispatch(plugin.context, void 0);
@@ -434,19 +457,28 @@ var CommonUtils;
                     //console.log("selected channel - clearing residues");
                     LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(plugin.context, this.SELECTION_VISUAL_REF);
                     this.selectedResidue = void 0;
+                    return;
                 }
                 if (this.selectedBulkResidues !== void 0) {
                     //console.log("selected channel - clearing residues");
                     LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(plugin.context, this.SELECTION_VISUAL_REF);
                     this.selectedBulkResidues = void 0;
+                    return;
                 }
                 if ((this.selectedChannelRef !== void 0) && (this.selectedChannelRef === i.source.ref)) {
                     //console.log("double clicked on tunel - deselecting");
                     this.clearSelectionPrivate(plugin);
                     this.selectedChannelRef = void 0;
+                    return;
                 }
                 else {
+                    //console.log("Channel selected");
+                    if (this.selectedChannelRef !== void 0 && this.selectedChannelRef !== i.source.ref) {
+                        deselectTunnelByRef(plugin, this.selectedChannelRef);
+                    }
                     this.selectedChannelRef = i.source.ref;
+                    selectTunnelByRef(plugin, this.selectedChannelRef);
+                    return;
                 }
                 //console.log("SelectionHelper: SelectEvent from code - ignoring ");
             };
@@ -455,6 +487,26 @@ var CommonUtils;
         SelectionHelper.SELECTION_VISUAL_REF = "res_visual";
         SelectionHelper.interactionEventStream = void 0;
         Selection.SelectionHelper = SelectionHelper;
+        function getIndices(v) {
+            if (v.props.model.surface === void 0) {
+                return [];
+            }
+            return v.props.model.surface.triangleIndices;
+        }
+        function selectTunnelByRef(plugin, ref) {
+            var entities = plugin.selectEntities(ref);
+            var v = entities[0];
+            if (LiteMol.Bootstrap.Entity.isVisual(entities[0]) && v.props.isSelectable) {
+                v.props.model.applySelection(getIndices(v), 1 /* Select */);
+            }
+        }
+        function deselectTunnelByRef(plugin, ref) {
+            var entities = plugin.selectEntities(ref);
+            var v = entities[0];
+            if (LiteMol.Bootstrap.Entity.isVisual(entities[0]) && v.props.isSelectable) {
+                v.props.model.applySelection(getIndices(v), 2 /* RemoveSelect */);
+            }
+        }
     })(Selection = CommonUtils.Selection || (CommonUtils.Selection = {}));
 })(CommonUtils || (CommonUtils = {}));
 var CommonUtils;
@@ -3963,7 +4015,7 @@ var AglomeredParameters;
                             React.createElement("span", { className: "icon bottleneck" }),
                             " ",
                             React.createElement("span", { className: "ATable-label" }, "Bottleneck")),
-                        React.createElement("th", { title: Tooltips.getMessageOrLeaveText("tooltip-Hydropathy"), className: "col col-4 ATable-header-hydropathy init-agp-tooltip", "data-toggle": "tooltip", "data-placement": "bottom" },
+                        React.createElement("th", { title: Tooltips.getMessageOrLeaveText("tooltip-agl-Hydropathy"), className: "col col-4 ATable-header-hydropathy init-agp-tooltip", "data-toggle": "tooltip", "data-placement": "bottom" },
                             React.createElement("span", { className: "glyphicon glyphicon-tint" }),
                             " ",
                             React.createElement("span", { className: "ATable-label" }, "Hydropathy")),
@@ -3971,11 +4023,11 @@ var AglomeredParameters;
                             React.createElement("span", { className: "glyphicon glyphicon-flash" }),
                             " ",
                             React.createElement("span", { className: "ATable-label" }, "Charge")),
-                        React.createElement("th", { title: Tooltips.getMessageOrLeaveText("tooltip-Polarity"), className: "col col-6 ATable-header-polarity init-agp-tooltip", "data-toggle": "tooltip", "data-placement": "bottom" },
+                        React.createElement("th", { title: Tooltips.getMessageOrLeaveText("tooltip-agl-Polarity"), className: "col col-6 ATable-header-polarity init-agp-tooltip", "data-toggle": "tooltip", "data-placement": "bottom" },
                             React.createElement("span", { className: "glyphicon glyphicon-plus" }),
                             " ",
                             React.createElement("span", { className: "ATable-label" }, "Polarity")),
-                        React.createElement("th", { title: Tooltips.getMessageOrLeaveText("tooltip-Mutability"), className: "col col-7 ATable-header-mutability init-agp-tooltip", "data-toggle": "tooltip", "data-placement": "bottom" },
+                        React.createElement("th", { title: Tooltips.getMessageOrLeaveText("tooltip-agl-Mutability"), className: "col col-7 ATable-header-mutability init-agp-tooltip", "data-toggle": "tooltip", "data-placement": "bottom" },
                             React.createElement("span", { className: "glyphicon glyphicon-scissors" }),
                             " ",
                             React.createElement("span", { className: "ATable-label" }, "Mutability")))));
@@ -4375,8 +4427,8 @@ var LayerResidues;
                     var annotation = annotations_1[_i];
                     if (first === true) {
                         first = false;
-                        trs.push(React.createElement("tr", { className: (this.isBackbone(residue) ? "help" : "") },
-                            React.createElement("td", { title: (this.isBackbone(residue) ? residue : ""), className: "col col-1", rowSpan: (annotations.length > 1) ? annotations.length : void 0 }, residueNameEl),
+                        trs.push(React.createElement("tr", null,
+                            React.createElement("td", { title: (this.isBackbone(residue) ? residue : ""), className: "col col-1 " + (this.isBackbone(residue) ? "help" : ""), rowSpan: (annotations.length > 1) ? annotations.length : void 0 }, residueNameEl),
                             React.createElement("td", { className: "col col-2" }, this.generateLink(annotation))));
                     }
                     else {
@@ -4403,13 +4455,13 @@ var LayerResidues;
                         React.createElement("strong", null, this.shortenBackbone(residue))) : React.createElement("span", null, residue);
                     if (annotation === void 0) {
                         this.props.app.invokeDataWait();
-                        rows.push(React.createElement(DGComponents.DGElementRow, { columns: [residueNameEl, React.createElement("span", null, "Annotation data still loading...")], title: [(this.isBackbone(residue) ? residue : ""), ""], trClass: (this.isBackbone(residue) ? "help" : "") }));
+                        rows.push(React.createElement(DGComponents.DGElementRow, { columns: [residueNameEl, React.createElement("span", null, "Annotation data still loading...")], title: [(this.isBackbone(residue) ? residue : ""), (this.isBackbone(residue) ? residue : "")], trClass: (this.isBackbone(residue) ? "help" : "") }));
                     }
                     else if (annotation !== null && annotation.length > 0) {
                         rows = rows.concat(this.generateSpannedRows(residue, annotation));
                     }
                     else {
-                        rows.push(React.createElement(DGComponents.DGElementRow, { columns: [residueNameEl, React.createElement("span", null)], title: [(this.isBackbone(residue) ? residue : ""), ""], trClass: (this.isBackbone(residue) ? "help" : "") }));
+                        rows.push(React.createElement(DGComponents.DGElementRow, { columns: [residueNameEl, React.createElement("span", null)], title: [(this.isBackbone(residue) ? residue : ""), (this.isBackbone(residue) ? residue : "")], trClass: (this.isBackbone(residue) ? "help" : "") }));
                     }
                 }
                 rows.push(React.createElement(DGComponents.DGRowEmpty, { columnsCount: DGTABLE_COLS_COUNT }));
@@ -4807,7 +4859,7 @@ var LiningResidues;
         var DGComponents = Datagrid.Components;
         var React = LiteMol.Plugin.React;
         var LiteMoleEvent = LiteMol.Bootstrap.Event;
-        var DGTABLE_COLS_COUNT = 1;
+        var DGTABLE_COLS_COUNT = 2;
         var NO_DATA_MESSAGE = "Select channel in 3D view for details...";
         ;
         ;
@@ -4823,6 +4875,7 @@ var LiningResidues;
                 _this.state = {
                     data: null,
                     app: _this,
+                    isWaitingForData: false
                 };
                 _this.layerIdx = -1;
                 return _this;
@@ -4846,6 +4899,16 @@ var LiningResidues;
                 };
                 this.interactionEventStream = LiteMoleEvent.Visual.VisualSelectElement.getStream(this.props.controller.context)
                     .subscribe(function (e) { return interactionHandler('select', e.data, _this); });
+            };
+            App.prototype.dataWaitHandler = function () {
+                this.setState({ isWaitingForData: false });
+            };
+            App.prototype.invokeDataWait = function () {
+                if (this.state.isWaitingForData) {
+                    return;
+                }
+                this.setState({ isWaitingForData: true });
+                Annotation.AnnotationDataProvider.subscribeForData(this.dataWaitHandler.bind(this));
             };
             App.prototype.componentWillUnmount = function () {
             };
@@ -4941,7 +5004,8 @@ var LiningResidues;
             DGHead.prototype.render = function () {
                 return (React.createElement("table", null,
                     React.createElement("tr", null,
-                        React.createElement("th", { title: "Residue", className: "col col-1" }, "Residue"))));
+                        React.createElement("th", { title: "Residue", className: "col col-1" }, "Residue"),
+                        React.createElement("th", { title: "Annotation", className: "col col-2" }, "Annotation"))));
             };
             ;
             return DGHead;
@@ -4951,6 +5015,12 @@ var LiningResidues;
             function DGBody() {
                 return _super !== null && _super.apply(this, arguments) || this;
             }
+            DGBody.prototype.generateLink = function (annotation) {
+                if (annotation.reference === "") {
+                    return (annotation.text !== void 0 && annotation.text !== null) ? React.createElement("span", null, annotation.text) : React.createElement("span", { className: "no-annotation" });
+                }
+                return React.createElement("a", { target: "_blank", href: annotation.link, dangerouslySetInnerHTML: { __html: annotation.text } });
+            };
             DGBody.prototype.shortenBackbone = function (residue) {
                 return residue.replace(/Backbone/g, '');
             };
@@ -4969,7 +5039,53 @@ var LiningResidues;
                     React.createElement("strong", null, this.shortenBackbone(residue))) : React.createElement("span", null, residue);
                 return React.createElement("a", { className: "hand", onClick: function (e) { _this.selectResidue(residue); } }, residueEl);
             };
+            DGBody.prototype.generateSpannedRows = function (residue, annotations) {
+                var trs = [];
+                var residueNameEl = this.getSelect3DLink(residue); //(this.isBackbone(residue))?<i><strong>{this.shortenBackbone(residue)}</strong></i>:<span>{residue}</span>;
+                var first = true;
+                for (var _i = 0, annotations_5 = annotations; _i < annotations_5.length; _i++) {
+                    var annotation = annotations_5[_i];
+                    if (first === true) {
+                        first = false;
+                        trs.push(React.createElement("tr", { title: (this.isBackbone(residue) ? residue : ""), className: (this.isBackbone(residue) ? "help" : "") },
+                            React.createElement("td", { className: "col col-1", rowSpan: (annotations.length > 1) ? annotations.length : void 0 }, residueNameEl),
+                            React.createElement("td", { className: "col col-2" }, this.generateLink(annotation))));
+                    }
+                    else {
+                        trs.push(React.createElement("tr", null,
+                            React.createElement("td", { className: "col col-2" }, this.generateLink(annotation))));
+                    }
+                }
+                return trs;
+            };
             DGBody.prototype.generateRows = function () {
+                if (this.props.data === null) {
+                    return React.createElement(DGComponents.DGNoDataInfoRow, { columnsCount: DGTABLE_COLS_COUNT, infoText: NO_DATA_MESSAGE });
+                }
+                var rows = [];
+                for (var _i = 0, _a = this.props.data; _i < _a.length; _i++) {
+                    var residue = _a[_i];
+                    var residueId = residue.split(" ").slice(1, 3).join(" ");
+                    var annotation = void 0;
+                    var annotationText = "";
+                    var annotationSource = "";
+                    annotation = Annotation.AnnotationDataProvider.getResidueAnnotations(residueId);
+                    //let residueNameEl = (this.isBackbone(residue))?<i><strong>{this.shortenBackbone(residue)}</strong></i>:<span>{residue}</span>;
+                    if (annotation === void 0) {
+                        this.props.app.invokeDataWait();
+                        rows.push(React.createElement(DGComponents.DGElementRow, { columns: [this.getSelect3DLink(residue), React.createElement("span", null, "Annotation data still loading...")], title: [(this.isBackbone(residue) ? residue : ""), ""], trClass: (this.isBackbone(residue) ? "help" : "") }));
+                    }
+                    else if (annotation !== null && annotation.length > 0) {
+                        rows = rows.concat(this.generateSpannedRows(residue, annotation));
+                    }
+                    else {
+                        rows.push(React.createElement(DGComponents.DGElementRow, { columns: [this.getSelect3DLink(residue), React.createElement("span", null)], title: [(this.isBackbone(residue) ? residue : ""), (this.isBackbone(residue) ? residue : "")], trClass: (this.isBackbone(residue) ? "help" : "") }));
+                    }
+                }
+                rows.push(React.createElement(DGComponents.DGRowEmpty, { columnsCount: DGTABLE_COLS_COUNT }));
+                return rows;
+            };
+            DGBody.prototype.generateRows_old = function () {
                 if (this.props.data === null) {
                     return React.createElement(DGComponents.DGNoDataInfoRow, { columnsCount: DGTABLE_COLS_COUNT, infoText: NO_DATA_MESSAGE });
                 }
@@ -5423,8 +5539,34 @@ var LiteMol;
                     // if (colorIndex < 0) colorIndex = Visualization.Molecule.Colors.DefaultPallete.length - 1;
                     // return color;
                 }
+                function getBoundingBox(centerline) {
+                    var first = centerline[0];
+                    var minX = first.X - first.Radius, minY = first.Y - first.Radius, minZ = first.Z - first.Radius;
+                    var maxX = first.X + first.Radius, maxY = first.Y + first.Radius, maxZ = first.Z + first.Radius;
+                    for (var _i = 0, centerline_1 = centerline; _i < centerline_1.length; _i++) {
+                        var s = centerline_1[_i];
+                        minX = Math.min(minX, s.X - s.Radius);
+                        maxX = Math.max(minX, s.X + s.Radius);
+                        minY = Math.min(minY, s.Y - s.Radius);
+                        maxY = Math.max(minY, s.Y + s.Radius);
+                        minX = Math.min(minZ, s.Z - s.Radius);
+                        maxX = Math.max(minZ, s.Z + s.Radius);
+                    }
+                    var bottomLeft = LiteMol.Core.Geometry.LinearAlgebra.Vector3(minX, minY, minZ);
+                    var topRight = LiteMol.Core.Geometry.LinearAlgebra.Vector3(maxX, maxY, maxZ);
+                    return { bottomLeft: bottomLeft, topRight: topRight };
+                }
+                function getDensity(boundingBox) {
+                    var box = LiteMol.Core.Geometry.LinearAlgebra.Vector3.sub(boundingBox.topRight, boundingBox.topRight, boundingBox.bottomLeft);
+                    var density = Math.pow(((Math.pow(99, 3)) / (box[0] * box[1] * box[2])), (1 / 3));
+                    if (density > 4)
+                        return 4;
+                    if (density < 0.1)
+                        return 0.1;
+                    return density;
+                }
                 //Added
-                function createTunnelSurface_sphere(sphereArray) {
+                function createTunnelSurfaceMarchCubes(sphereArray) {
                     var idxFilter = 1;
                     var posTableBuilder = LiteMol.Core.Utils.DataTable.builder(Math.ceil(sphereArray.length / idxFilter));
                     posTableBuilder.addColumn("x", LiteMol.Core.Utils.DataTable.customColumn());
@@ -5451,11 +5593,21 @@ var LiteMol;
                             atomRadius: (function (i) {
                                 return sphereArray[i * idxFilter].Radius.valueOf();
                             }),
+                            density: getDensity(getBoundingBox(sphereArray)),
                             probeRadius: 0,
-                            smoothingIterations: 2,
-                            interactive: true,
+                            smoothingIterations: 4,
+                            interactive: false,
                         },
                     }).run();
+                }
+                function createSphere(radius, center, id, tessalation) {
+                    if (id === void 0) {
+                        id = 0;
+                    }
+                    if (tessalation === void 0) {
+                        tessalation = 1;
+                    }
+                    return { type: 'Sphere', id: 0, radius: radius, center: [center.x, center.y, center.z], tessalation: tessalation };
                 }
                 //Added
                 function createTunnelSurface(sphereArray) {
@@ -5469,7 +5621,8 @@ var LiteMol;
                         if ((idxCounter - 1) % idxFilter !== 0) {
                             continue;
                         }
-                        s.add({ type: 'Sphere', id: 0 /*id++*/, radius: sphere.Radius, center: { x: sphere.X, y: sphere.Y, z: sphere.Z }, tessalation: 2 });
+                        var center = { x: sphere.X, y: sphere.Y, z: sphere.Z };
+                        s.add(createSphere(sphere.Radius, center, 0, 2));
                     }
                     return s.buildSurface().run();
                 }
@@ -5495,7 +5648,8 @@ var LiteMol;
                     if (parts === void 0) { parts = 8; }
                     var sphere = spheres[id];
                     if (id === 0 || id === spheres.length - 1) {
-                        s.add({ type: 'Sphere', id: id, radius: sphere.Radius, center: { x: sphere.X, y: sphere.Y, z: sphere.Z }, tessalation: 2 });
+                        //{ type: 'Sphere', id, radius: sphere.Radius, center: [sphere.X, sphere.Y, sphere.Z ], tessalation: 2 }
+                        s.add(createSphere(sphere.Radius, { x: sphere.X, y: sphere.Y, z: sphere.Z }, 0, 2));
                         return;
                     }
                     ;
@@ -5629,7 +5783,8 @@ var LiteMol;
                             y: sphere.Y + u.y * sphere.Radius,
                             z: sphere.Z + u.z * sphere.Radius
                         };
-                        s.add({ type: 'Sphere', id: id, radius: 1, center: center, tessalation: 2 });
+                        //{ type: 'Sphere', id, radius:1, center, tessalation: 2 }
+                        s.add(createSphere(1, center, id, 2));
                     }
                 }
                 //Added
@@ -5743,7 +5898,7 @@ var LiteMol;
                         }
                         else {
                             //Zde se volá mnou vytvořená funkce pro generování povrchu podle koulí z JSONu(u nás zatím Centerline, u Vás Profile)
-                            var sphereSurfacePromise_1 = createTunnelSurface(channel.Profile); //createTunnelSurfaceWithLayers(channel.Profile, channel.Layers);
+                            var sphereSurfacePromise_1 = createTunnelSurfaceMarchCubes(channel.Profile); //createTunnelSurfaceWithLayers(channel.Profile, channel.Layers);
                             promises.push(new LiteMol.Promise(function (res, rej) {
                                 //Zpracování úspěšně vygenerovného povrchu tunelu
                                 sphereSurfacePromise_1.then(function (val) {
@@ -5764,13 +5919,21 @@ var LiteMol;
                                     t.add('mole-data', State.CreateSurface, {
                                         label: label(channel),
                                         tag: { type: channel.Type, element: channel },
-                                        surface: surface /*.surface*/,
+                                        surface: surface.surface,
                                         color: channel.__color,
                                         isInteractive: true,
                                         transparency: { alpha: alpha },
                                     }, { ref: channel.__id, isHidden: true });
-                                    plugin.applyTransform(t).then(function () { res(); });
-                                }).catch(rej);
+                                    plugin.applyTransform(t)
+                                        .then(function () {
+                                        res();
+                                    })
+                                        .catch(function (err) {
+                                        rej(err);
+                                    });
+                                }).catch(function (err) {
+                                    rej(err);
+                                });
                             }));
                         }
                     };
@@ -5793,7 +5956,8 @@ var LiteMol;
                     var id = 0;
                     for (var _i = 0, _a = origins.Points; _i < _a.length; _i++) {
                         var p = _a[_i];
-                        s.add({ type: 'Sphere', id: id++, radius: 1.69, center: { x: p.X, y: p.Y, z: p.Z } });
+                        //{ type: 'Sphere', id: id++, radius: 1.69, center: [p.X, p.Y, p.Z] }
+                        s.add(createSphere(1.69, { x: p.X, y: p.Y, z: p.Z }, id++));
                     }
                     return s.buildSurface().run();
                 }
@@ -6000,6 +6164,14 @@ var LiteMol;
                             _this.setState({ label: r.authSeqNumber + " " + r.chain.authAsymId });
                         }).bind(this));
                         CommonUtils.Selection.SelectionHelper.attachOnResidueBulkSelectHandler((function (r) {
+                            var label = r.map(function (val, idx, array) {
+                                return val.authSeqNumber + " " + val.chain.authAsymId;
+                            }).reduce(function (prev, cur, idx, array) {
+                                return "" + prev + ((idx === 0) ? '' : ', ') + cur;
+                            });
+                            _this.setState({ label: label });
+                        }).bind(this));
+                        CommonUtils.Selection.SelectionHelper.attachOnClearSelectionHandler((function () {
                             _this.setState({ label: void 0 });
                         }).bind(this));
                         this.observer = this.props.plugin.subscribe(LiteMol.Bootstrap.Event.Molecule.ModelSelect, function (e) {
@@ -6224,7 +6396,8 @@ var LiteMol;
                         }
                         else {
                             return React.createElement(Renderable, __assign({ label: React.createElement("span", null,
-                                    React.createElement("b", null, c.Type),
+                                    React.createElement("b", null,
+                                        React.createElement("a", { onClick: this.selectChannel.bind(this) }, c.Type)),
                                     ", ", "Length: " + len + " \u00C5"), element: c, toggle: Channels_1.State.showChannelVisuals }, this.props.state));
                         }
                     };

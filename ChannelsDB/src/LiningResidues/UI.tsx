@@ -5,7 +5,7 @@ namespace LiningResidues.UI{
     import LiteMoleEvent = LiteMol.Bootstrap.Event;
     import TunnelUtils = CommonUtils.Tunnels;
     
-    let DGTABLE_COLS_COUNT = 1;
+    let DGTABLE_COLS_COUNT = 2;
     let NO_DATA_MESSAGE = "Select channel in 3D view for details...";
 
     declare function $(p:any): any;
@@ -14,6 +14,7 @@ namespace LiningResidues.UI{
     interface State{
         data: string[] | null,
         app: App,
+        isWaitingForData: boolean
     };
 
     interface ChannelEventInfo { 
@@ -41,6 +42,7 @@ namespace LiningResidues.UI{
         state:State = {
             data: null,
             app: this,
+            isWaitingForData: false
         };
 
         layerIdx = -1;
@@ -67,6 +69,19 @@ namespace LiningResidues.UI{
 
             this.interactionEventStream = LiteMoleEvent.Visual.VisualSelectElement.getStream(this.props.controller.context)
                 .subscribe(e => interactionHandler('select', e.data as ChannelEventInfo, this));
+        }
+
+        private dataWaitHandler(){
+            this.setState({isWaitingForData:false});
+        }
+
+        public invokeDataWait(){
+            if(this.state.isWaitingForData){
+                return;
+            }
+
+            this.setState({isWaitingForData: true});
+            Annotation.AnnotationDataProvider.subscribeForData(this.dataWaitHandler.bind(this));
         }
 
         componentWillUnmount(){
@@ -168,7 +183,10 @@ namespace LiningResidues.UI{
                     <tr>
                         <th title="Residue" className="col col-1">
                             Residue
-                        </th>                         
+                        </th>
+                        <th title="Annotation" className="col col-2">
+                            Annotation
+                        </th>                             
                     </tr>
                 </table>
             );
@@ -176,6 +194,13 @@ namespace LiningResidues.UI{
     }
 
     class DGBody extends React.Component<State,{}>{ 
+
+         private generateLink(annotation:Annotation.ResidueAnnotation){
+            if(annotation.reference===""){
+                return (annotation.text!== void 0 && annotation.text !== null)?<span>{annotation.text}</span>:<span className="no-annotation"/>;
+            }
+            return <a target="_blank" href={annotation.link} dangerouslySetInnerHTML={{__html:annotation.text}}></a>
+        }    
 
         private shortenBackbone(residue:string){
             return residue.replace(/Backbone/g,'');
@@ -197,7 +222,78 @@ namespace LiningResidues.UI{
             return <a className="hand" onClick={(e)=>{this.selectResidue(residue)}}>{residueEl}</a>
         }
 
+        private generateSpannedRows(residue:string, annotations: Annotation.ResidueAnnotation[]){
+            let trs:JSX.Element[] = [];
+
+            let residueNameEl = this.getSelect3DLink(residue);//(this.isBackbone(residue))?<i><strong>{this.shortenBackbone(residue)}</strong></i>:<span>{residue}</span>;
+
+            let first = true;
+            for(let annotation of annotations){
+                if(first === true){
+                    first = false;
+                    trs.push(
+                        <tr title={(this.isBackbone(residue)?residue:"")} className={(this.isBackbone(residue)?"help":"")}>
+                            <td className={`col col-1`} rowSpan={(annotations.length>1)?annotations.length:void 0}>
+                                {residueNameEl}
+                            </td>    
+                            <td className={`col col-2`} >
+                                {this.generateLink(annotation)}
+                            </td>
+                        </tr>
+                    );
+                }
+                else{
+                   trs.push(
+                        <tr>    
+                            <td className={`col col-2`} >
+                                {this.generateLink(annotation)}
+                            </td>
+                        </tr>
+                    ); 
+                }
+            }
+            return trs;
+        }
+
         private generateRows(){
+            if(this.props.data === null){
+                return <DGComponents.DGNoDataInfoRow columnsCount={DGTABLE_COLS_COUNT} infoText={NO_DATA_MESSAGE}/>;
+            }
+
+            let rows:JSX.Element[] = [];
+            
+            for(let residue of this.props.data){
+                let residueId = residue.split(" ").slice(1,3).join(" ");
+                
+                let annotation;
+                let annotationText = "";
+                let annotationSource = "";
+
+                annotation = Annotation.AnnotationDataProvider.getResidueAnnotations(residueId);
+                //let residueNameEl = (this.isBackbone(residue))?<i><strong>{this.shortenBackbone(residue)}</strong></i>:<span>{residue}</span>;
+                if(annotation === void 0){
+                    this.props.app.invokeDataWait();
+                    rows.push(
+                        <DGComponents.DGElementRow columns={[this.getSelect3DLink(residue),<span>Annotation data still loading...</span>]} title={[(this.isBackbone(residue)?residue:""),""]} trClass={(this.isBackbone(residue)?"help":"")} />
+                    );
+                }
+                else if(annotation !== null && annotation.length>0){
+                    rows = rows.concat(
+                        this.generateSpannedRows(residue,annotation)
+                    );
+                }
+                else{
+                    rows.push(
+                        <DGComponents.DGElementRow columns={[this.getSelect3DLink(residue),<span/>]} title={[(this.isBackbone(residue)?residue:""),(this.isBackbone(residue)?residue:"")]} trClass={(this.isBackbone(residue)?"help":"")} />
+                    );
+                }
+            }            
+            rows.push(<DGComponents.DGRowEmpty columnsCount={DGTABLE_COLS_COUNT} />);
+
+            return rows;
+        }
+
+        private generateRows_old(){
             if(this.props.data === null){
                 return <DGComponents.DGNoDataInfoRow columnsCount={DGTABLE_COLS_COUNT} infoText={NO_DATA_MESSAGE}/>;
             }

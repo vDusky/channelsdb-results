@@ -461,7 +461,7 @@ only screen and (max-height: 600px) {
 }
 
 .ui-selection{
-    height: 30px;
+    min-height: 30px;
     line-height: 30px;
 }
 

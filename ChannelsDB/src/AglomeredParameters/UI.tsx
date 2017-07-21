@@ -104,16 +104,16 @@ namespace AglomeredParameters.UI{
                         <th title={Tooltips.getMessageOrLeaveText("tooltip-Bottleneck")} className="col col-3 ATable-header-bottleneck init-agp-tooltip" data-toggle="tooltip" data-placement="bottom">
                             <span className="icon bottleneck" /> <span className="ATable-label">Bottleneck</span>
                         </th>
-                        <th title={Tooltips.getMessageOrLeaveText("tooltip-Hydropathy")} className="col col-4 ATable-header-hydropathy init-agp-tooltip" data-toggle="tooltip" data-placement="bottom">
+                        <th title={Tooltips.getMessageOrLeaveText("tooltip-agl-Hydropathy")} className="col col-4 ATable-header-hydropathy init-agp-tooltip" data-toggle="tooltip" data-placement="bottom">
                             <span className="glyphicon glyphicon-tint" /> <span className="ATable-label">Hydropathy</span>
                         </th>
                         <th title="Charge" className="col col-5 ATable-header-charge init-agp-tooltip" data-toggle="tooltip" data-placement="bottom">
                             <span className="glyphicon glyphicon-flash" /> <span className="ATable-label">Charge</span>
                         </th>
-                        <th title={Tooltips.getMessageOrLeaveText("tooltip-Polarity")} className="col col-6 ATable-header-polarity init-agp-tooltip" data-toggle="tooltip" data-placement="bottom">
+                        <th title={Tooltips.getMessageOrLeaveText("tooltip-agl-Polarity")} className="col col-6 ATable-header-polarity init-agp-tooltip" data-toggle="tooltip" data-placement="bottom">
                             <span className="glyphicon glyphicon-plus" /> <span className="ATable-label">Polarity</span>
                         </th>
-                        <th title={Tooltips.getMessageOrLeaveText("tooltip-Mutability")} className="col col-7 ATable-header-mutability init-agp-tooltip" data-toggle="tooltip" data-placement="bottom">
+                        <th title={Tooltips.getMessageOrLeaveText("tooltip-agl-Mutability")} className="col col-7 ATable-header-mutability init-agp-tooltip" data-toggle="tooltip" data-placement="bottom">
                             <span className="glyphicon glyphicon-scissors" /> <span className="ATable-label">Mutability</span>
                         </th>                     
                     </tr>

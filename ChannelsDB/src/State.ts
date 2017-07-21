@@ -156,8 +156,37 @@ namespace LiteMol.Example.Channels.State {
         // return color;
     }
 
+    function getBoundingBox(centerline: DataInterface.Profile[]){
+        let first = centerline[0];
+        let minX=first.X-first.Radius, minY=first.Y-first.Radius, minZ=first.Z-first.Radius;
+        let maxX=first.X+first.Radius, maxY=first.Y+first.Radius, maxZ=first.Z+first.Radius;
+
+        for(let s of centerline){
+            minX = Math.min(minX,s.X-s.Radius);
+            maxX = Math.max(minX,s.X+s.Radius);
+
+            minY = Math.min(minY,s.Y-s.Radius);
+            maxY = Math.max(minY,s.Y+s.Radius);
+
+            minX = Math.min(minZ,s.Z-s.Radius);
+            maxX = Math.max(minZ,s.Z+s.Radius);
+        }
+
+        let bottomLeft = Core.Geometry.LinearAlgebra.Vector3(minX,minY,minZ);
+        let topRight = Core.Geometry.LinearAlgebra.Vector3(maxX,maxY,maxZ);
+        return {bottomLeft,topRight};
+    }
+
+    function getDensity(boundingBox:{bottomLeft:Core.Geometry.LinearAlgebra.Vector3, topRight:Core.Geometry.LinearAlgebra.Vector3}){
+        const box = Core.Geometry.LinearAlgebra.Vector3.sub(boundingBox.topRight, boundingBox.topRight, boundingBox.bottomLeft);
+        const density = ((99 ** 3) / (box[0] * box[1] * box[2])) ** (1 / 3);
+        if (density > 4) return 4;
+        if (density < 0.1) return 0.1;
+        return density;
+    }
+
     //Added
-    function createTunnelSurface_sphere(sphereArray: DataInterface.Profile[]){
+    function createTunnelSurfaceMarchCubes(sphereArray: DataInterface.Profile[]){
         let idxFilter = 1;
         let posTableBuilder = Core.Utils.DataTable.builder<Core.Structure.Position>(Math.ceil(sphereArray.length/idxFilter));
         
@@ -189,11 +218,22 @@ namespace LiteMol.Example.Channels.State {
                 atomRadius: ((i: number) => {
                     return sphereArray[i*idxFilter].Radius.valueOf();
                 }),
+                density:getDensity(getBoundingBox(sphereArray)),
                 probeRadius: 0,
-                smoothingIterations: 2,
-                interactive: true, //false
+                smoothingIterations: 4,
+                interactive: false,
             },                
         }).run();
+    }
+
+    function createSphere(radius:number, center:{x:number,y:number,z:number},id?:number,tessalation?:number):LiteMol.Visualization.Primitive.Shape.Sphere{
+        if(id===void 0){
+            id = 0;
+        }
+        if(tessalation===void 0){
+            tessalation = 1;
+        }
+        return { type: 'Sphere', id: 0, radius, center: [center.x,center.y,center.z], tessalation};
     }
 
     //Added
@@ -207,7 +247,8 @@ namespace LiteMol.Example.Channels.State {
             if((idxCounter-1)%idxFilter!==0){
                 continue;
             }
-            s.add({ type: 'Sphere', id: 0/*id++*/, radius: sphere.Radius, center: { x: sphere.X, y: sphere.Y, z: sphere.Z }, tessalation: 2 });
+            let center = {x:sphere.X, y:sphere.Y, z:sphere.Z};
+            s.add(createSphere(sphere.Radius, center, 0, 2));
         }
         return s.buildSurface().run();
     }
@@ -237,7 +278,8 @@ namespace LiteMol.Example.Channels.State {
     function buildRingSurface(s: Visualization.Primitive.Builder,spheres:DataInterface.Profile[],id:number,parts:number=8){
         let sphere = spheres[id];
         if(id === 0 || id === spheres.length-1){
-            s.add({ type: 'Sphere', id, radius: sphere.Radius, center: { x: sphere.X, y: sphere.Y, z: sphere.Z }, tessalation: 2 });            
+            //{ type: 'Sphere', id, radius: sphere.Radius, center: [sphere.X, sphere.Y, sphere.Z ], tessalation: 2 }
+            s.add(createSphere(sphere.Radius, {x:sphere.X, y:sphere.Y, z:sphere.Z}, 0, 2));            
             return;
         }
         interface vector3{x:number,y:number,z:number};
@@ -382,12 +424,13 @@ namespace LiteMol.Example.Channels.State {
             }
             u = normalize(u);
             let center = {
-                x: sphere.X+u.x*sphere.Radius,
-                y: sphere.Y+u.y*sphere.Radius,
-                z: sphere.Z+u.z*sphere.Radius
+                x:sphere.X+u.x*sphere.Radius,
+                y:sphere.Y+u.y*sphere.Radius,
+                z:sphere.Z+u.z*sphere.Radius
             };
 
-            s.add({ type: 'Sphere', id, radius:1, center, tessalation: 2 });
+            //{ type: 'Sphere', id, radius:1, center, tessalation: 2 }
+            s.add(createSphere(1, center, id, 2));
         }
     }
     
@@ -509,7 +552,7 @@ namespace LiteMol.Example.Channels.State {
                 plugin.command(Bootstrap.Command.Tree.RemoveNode, channel.__id);
             } else {
                 //Zde se volá mnou vytvořená funkce pro generování povrchu podle koulí z JSONu(u nás zatím Centerline, u Vás Profile)
-                let sphereSurfacePromise = createTunnelSurface(channel.Profile);//createTunnelSurfaceWithLayers(channel.Profile, channel.Layers);
+                let sphereSurfacePromise = /*createTunnelSurface(channel.Profile);*/createTunnelSurfaceMarchCubes(channel.Profile);//createTunnelSurfaceWithLayers(channel.Profile, channel.Layers);
                 
                 promises.push(new Promise<any>((res,rej) => {
                     //Zpracování úspěšně vygenerovného povrchu tunelu
@@ -532,14 +575,22 @@ namespace LiteMol.Example.Channels.State {
                         t.add('mole-data', CreateSurface, {
                             label: label(channel),
                             tag: { type:channel.Type, element: channel },
-                            surface: surface/*.surface*/,
+                            surface: surface.surface,
                             color: channel.__color as Visualization.Color,
                             isInteractive: true,
                             transparency: { alpha },
                         }, { ref: channel.__id, isHidden: true });
 
-                        plugin.applyTransform(t).then(()=>{res();});
-                    }).catch(rej);
+                        plugin.applyTransform(t)
+                            .then(()=>{
+                                res();
+                            })
+                            .catch((err)=>{
+                                rej(err)
+                            });
+                    }).catch((err)=>{
+                        rej(err)
+                    });
                 }));
             }
         }
@@ -557,7 +608,8 @@ namespace LiteMol.Example.Channels.State {
         let s = Visualization.Primitive.Builder.create();
         let id = 0;
         for (let p of origins.Points) {
-            s.add({ type: 'Sphere', id: id++, radius: 1.69, center: { x: p.X, y: p.Y, z: p.Z } });
+            //{ type: 'Sphere', id: id++, radius: 1.69, center: [p.X, p.Y, p.Z] }
+            s.add(createSphere(1.69, {x:p.X,y:p.Y,z:p.Z}, id++));
         }
         return s.buildSurface().run();        
     }
