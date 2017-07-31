@@ -47,17 +47,76 @@ namespace ResidueAnnotations.UI{
 
         layerIdx = -1;
 
+        sortResidues(residues:string[], useAnnotations?:boolean){
+            if(useAnnotations===void 0){
+                useAnnotations = false;
+            }
+            if(useAnnotations && (this.state.isWaitingForData || Annotation.AnnotationDataProvider.getResidueAnnotations(residues[0])===void 0)){
+                useAnnotations = false;
+            }
+
+            if(residues.length===0){
+                return residues;
+            }
+
+            interface RType{chain: {authAsymId: string}, authSeqNumber:number};
+
+            let groupFn = (resParsed:RType[])=>{
+                let lining:RType[] = [];
+                let other:RType[] = [];
+
+                if(useAnnotations){
+                    for(let r of resParsed){
+                        let annotation = Annotation.AnnotationDataProvider.getResidueAnnotations(`${r.authSeqNumber} ${r.chain.authAsymId}`);
+                        
+                        //annotation data not ready
+                        if(annotation===void 0){
+                            other = resParsed;
+                            lining = [];
+                            break;
+                        }
+                        
+                        //annotation data available
+                        if(annotation.length!==0){
+                            let isLining = false;
+                            for(let a of annotation){
+                                if(a.isLining===true){
+                                    lining.push(r);
+                                    isLining = true;
+                                    break;
+                                }
+                            }
+
+                            if(!isLining){
+                                other.push(r);   
+                            }
+                        }     
+                        else{  //no annotation data available
+                            other.push(r);
+                        }
+                    }
+                }
+                else{
+                    other = resParsed;
+                }
+
+                return [lining, other];
+            }
+
+            return CommonUtils.Residues.sort(residues, groupFn);
+        }
+
         componentDidMount() {
             let list = Annotation.AnnotationDataProvider.getResidueList();
             if(list !== void 0){
-                this.setState({data:list});
+                this.setState({data:this.sortResidues(list)});
             }else{
                 Annotation.AnnotationDataProvider.subscribeForData((()=>{
                     let list = Annotation.AnnotationDataProvider.getResidueList();
                     if(list === void 0){
                         return;
                     }
-                    this.setState({data:list});
+                    this.setState({data:this.sortResidues(list, true)});
                     setTimeout(function(){
                         $( window ).trigger('contentResize');
                     },1);

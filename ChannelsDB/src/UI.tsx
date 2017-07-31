@@ -143,23 +143,37 @@ namespace LiteMol.Example.Channels.UI {
 
     export class Selection extends React.Component<State, { label?: string|JSX.Element }> {
         state = { label: void 0}
-
+        
         private observer: Bootstrap.Rx.IDisposable | undefined = void 0;
         private observerChannels: Bootstrap.Rx.IDisposable | undefined = void 0;
-        componentWillMount() {
+        componentWillMount() {            
             CommonUtils.Selection.SelectionHelper.attachOnResidueSelectHandler(((r:any)=>{
                 this.setState({ label: `${r.name} ${r.authSeqNumber} ${r.chain.authAsymId}`});
             }).bind(this));
             CommonUtils.Selection.SelectionHelper.attachOnResidueLightSelectHandler(((r:CommonUtils.Selection.LightResidueInfo)=>{
-                this.setState({ label: `${r.authSeqNumber} ${r.chain.authAsymId}`});
+                let name = CommonUtils.Residues.getName(r.authSeqNumber,this.props.plugin);
+                this.setState({ label: `${name} ${r.authSeqNumber} ${r.chain.authAsymId}`});
             }).bind(this));
             CommonUtils.Selection.SelectionHelper.attachOnResidueBulkSelectHandler(((r:CommonUtils.Selection.LightResidueInfo[])=>{    
                 let label = r.map((val,idx,array)=>{
-                    return `${val.authSeqNumber} ${val.chain.authAsymId}`;
+                    let name = CommonUtils.Residues.getName(val.authSeqNumber,this.props.plugin);
+                    return `${name}&nbsp;${val.authSeqNumber}&nbsp;${val.chain.authAsymId}`;
                 }).reduce((prev,cur,idx,array)=>{
-                    return `${prev}${(idx===0)?'':', '}${cur}`;
+                    return `${prev}${(idx===0)?'':',\n'}${cur}`;
                 });
-                this.setState({ label });
+                let items = label.split('\n');
+                let elements = [];
+                for(let e of items){
+                    let lineParts = e.split('&nbsp;');
+                    elements.push(
+                        <div>
+                            {lineParts[0]}&nbsp;{lineParts[1]}&nbsp;{lineParts[2]}
+                        </div>
+                    );
+                }
+                this.setState({ 
+                    label: <div className="columns">{elements}</div>
+                });
             }).bind(this));
             CommonUtils.Selection.SelectionHelper.attachOnClearSelectionHandler((()=>{
                 this.setState({ label: void 0});

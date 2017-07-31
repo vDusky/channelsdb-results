@@ -547,6 +547,10 @@ only screen and (max-height: 600px) {
     background-color:red;
 }
 
+.ui-selection .columns{
+    column-count: 3;
+}
+
 #layer-residues .datagrid{
     bottom:initial;
     padding-top:0;

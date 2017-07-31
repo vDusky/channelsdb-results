@@ -168,6 +168,138 @@ var CommonUtils;
 })(CommonUtils || (CommonUtils = {}));
 var CommonUtils;
 (function (CommonUtils) {
+    ;
+    var Residues = (function () {
+        function Residues() {
+        }
+        Residues.initCache = function () {
+            if (this.cache !== void 0) {
+                return;
+            }
+            this.cache = new Map();
+        };
+        Residues.getDirect = function (residueSeqNumber, plugin) {
+            if (plugin.context.select('polymer-visual')[0].props !== void 0) {
+                var props = plugin.context.select('polymer-visual')[0].props;
+                if (props.model === void 0 || props.model.model === void 0) {
+                    return "";
+                }
+                var model = props.model.model;
+                var params = LiteMol.Core.Structure.Query.residuesById(residueSeqNumber).compile()(LiteMol.Core.Structure.Query.Context.ofStructure(model));
+                var fragment = params.fragments[0];
+                var residueInd = fragment.residueIndices[0];
+                var residueData = params.context.structure.data.residues;
+                var resIdx = residueData.indices[residueInd];
+                var name_1 = residueData.name[resIdx];
+                return name_1;
+            }
+            return "";
+        };
+        Residues.getName = function (residueSeqNumber, plugin) {
+            this.initCache();
+            if (this.cache.has(residueSeqNumber)) {
+                var name_2 = this.cache.get(residueSeqNumber);
+                if (name_2 === void 0) {
+                    return "";
+                }
+                return name_2;
+            }
+            var name = this.getDirect(residueSeqNumber, plugin);
+            this.cache.set(residueSeqNumber, name);
+            return name;
+        };
+        Residues.sort = function (residues, groupFunction, hasName, includeBackbone) {
+            if (includeBackbone === void 0) {
+                includeBackbone = false;
+            }
+            if (hasName === void 0) {
+                hasName = false;
+            }
+            if (residues.length === 0) {
+                return residues;
+            }
+            var resParsed = this.parseResidues(residues, hasName);
+            var groups = [];
+            if (groupFunction !== void 0) {
+                groups = groupFunction(resParsed);
+            }
+            else {
+                groups.push(resParsed);
+            }
+            var sortFn = this.getSortFunction();
+            var all = [];
+            for (var _i = 0, groups_1 = groups; _i < groups_1.length; _i++) {
+                var group = groups_1[_i];
+                all = all.concat(group.sort(sortFn));
+            }
+            return all.map(function (val, idx, array) {
+                if (hasName) {
+                    return val.name + " " + val.authSeqNumber + " " + val.chain.authAsymId + ((includeBackbone && val.backbone) ? ' Backbone' : '');
+                }
+                else {
+                    return val.authSeqNumber + " " + val.chain.authAsymId + ((includeBackbone && val.backbone) ? ' Backbone' : '');
+                }
+            });
+        };
+        Residues.parseResidue = function (residue) {
+            return residue.split(" ");
+        };
+        Residues.parseResidues = function (residues, hasName) {
+            if (hasName === void 0) {
+                hasName = false;
+            }
+            var resParsed = [];
+            for (var _i = 0, residues_1 = residues; _i < residues_1.length; _i++) {
+                var residue = residues_1[_i];
+                var residueParts = this.parseResidue(residue);
+                if (hasName) {
+                    resParsed.push({
+                        chain: { authAsymId: residueParts[2] },
+                        authSeqNumber: Number(residueParts[1]),
+                        name: residueParts[0],
+                        backbone: (residueParts.length === 4)
+                    });
+                }
+                else {
+                    resParsed.push({
+                        chain: { authAsymId: residueParts[1] },
+                        authSeqNumber: Number(residueParts[0]),
+                        backbone: (residueParts.length === 3)
+                    });
+                }
+            }
+            return resParsed;
+        };
+        Residues.getSortFunction = function () {
+            return function (a, b) {
+                if (a.chain.authAsymId < b.chain.authAsymId) {
+                    return -1;
+                }
+                else if (a.chain.authAsymId > b.chain.authAsymId) {
+                    return 1;
+                }
+                else {
+                    if (a.authSeqNumber === b.authSeqNumber) {
+                        if (a.backbone && b.backbone) {
+                            return 0;
+                        }
+                        else if (a.backbone && !b.backbone) {
+                            return -1;
+                        }
+                        else {
+                            return 1;
+                        }
+                    }
+                    return a.authSeqNumber - b.authSeqNumber;
+                }
+            };
+        };
+        return Residues;
+    }());
+    CommonUtils.Residues = Residues;
+})(CommonUtils || (CommonUtils = {}));
+var CommonUtils;
+(function (CommonUtils) {
     var Numbers = (function () {
         function Numbers() {
         }
@@ -341,8 +473,8 @@ var CommonUtils;
                     }
                 }
                 var queries = [];
-                for (var _i = 0, residues_1 = residues; _i < residues_1.length; _i++) {
-                    var residue = residues_1[_i];
+                for (var _i = 0, residues_2 = residues; _i < residues_2.length; _i++) {
+                    var residue = residues_2[_i];
                     queries.push((_a = LiteMol.Core.Structure.Query).chainsById.apply(_a, [residue.chain.authAsymId]).intersectWith((_b = LiteMol.Core.Structure.Query).residues.apply(_b, [{ authSeqNumber: residue.authSeqNumber }])).compile());
                 }
                 var query = (_c = LiteMol.Core.Structure.Query).or.apply(_c, queries);
@@ -4501,11 +4633,62 @@ var ResidueAnnotations;
                 _this.layerIdx = -1;
                 return _this;
             }
+            App.prototype.sortResidues = function (residues, useAnnotations) {
+                if (useAnnotations === void 0) {
+                    useAnnotations = false;
+                }
+                if (useAnnotations && (this.state.isWaitingForData || Annotation.AnnotationDataProvider.getResidueAnnotations(residues[0]) === void 0)) {
+                    useAnnotations = false;
+                }
+                if (residues.length === 0) {
+                    return residues;
+                }
+                ;
+                var groupFn = function (resParsed) {
+                    var lining = [];
+                    var other = [];
+                    if (useAnnotations) {
+                        for (var _i = 0, resParsed_1 = resParsed; _i < resParsed_1.length; _i++) {
+                            var r = resParsed_1[_i];
+                            var annotation = Annotation.AnnotationDataProvider.getResidueAnnotations(r.authSeqNumber + " " + r.chain.authAsymId);
+                            //annotation data not ready
+                            if (annotation === void 0) {
+                                other = resParsed;
+                                lining = [];
+                                break;
+                            }
+                            //annotation data available
+                            if (annotation.length !== 0) {
+                                var isLining = false;
+                                for (var _a = 0, annotation_1 = annotation; _a < annotation_1.length; _a++) {
+                                    var a = annotation_1[_a];
+                                    if (a.isLining === true) {
+                                        lining.push(r);
+                                        isLining = true;
+                                        break;
+                                    }
+                                }
+                                if (!isLining) {
+                                    other.push(r);
+                                }
+                            }
+                            else {
+                                other.push(r);
+                            }
+                        }
+                    }
+                    else {
+                        other = resParsed;
+                    }
+                    return [lining, other];
+                };
+                return CommonUtils.Residues.sort(residues, groupFn);
+            };
             App.prototype.componentDidMount = function () {
                 var _this = this;
                 var list = Annotation.AnnotationDataProvider.getResidueList();
                 if (list !== void 0) {
-                    this.setState({ data: list });
+                    this.setState({ data: this.sortResidues(list) });
                 }
                 else {
                     Annotation.AnnotationDataProvider.subscribeForData((function () {
@@ -4513,7 +4696,7 @@ var ResidueAnnotations;
                         if (list === void 0) {
                             return;
                         }
-                        _this.setState({ data: list });
+                        _this.setState({ data: _this.sortResidues(list, true) });
                         setTimeout(function () {
                             $(window).trigger('contentResize');
                         }, 1);
@@ -4649,8 +4832,8 @@ var ResidueAnnotations;
                     }
                 };
                 var this_1 = this;
-                for (var _i = 0, residues_2 = residues; _i < residues_2.length; _i++) {
-                    var residueId = residues_2[_i];
+                for (var _i = 0, residues_3 = residues; _i < residues_3.length; _i++) {
+                    var residueId = residues_3[_i];
                     _loop_1(residueId);
                 }
                 rows.push(React.createElement(DGComponents.DGRowEmpty, { columnsCount: DGTABLE_COLS_COUNT }));
@@ -4891,7 +5074,9 @@ var LiningResidues;
                         || i.source.props.tag.type == "Pore"
                         || i.source.props.tag.type == "MergedPore") {
                         var layers = i.source.props.tag.element.Layers;
-                        app.setState({ data: layers.ResidueFlow });
+                        app.setState({ data: CommonUtils.Residues.sort(layers.ResidueFlow, void 0, true, true) });
+                        //console.log(layers.ResidueFlow);
+                        //app.setState({data:layers.ResidueFlow});
                         setTimeout(function () {
                             $(window).trigger('contentResize');
                         }, 1);
@@ -6161,15 +6346,31 @@ var LiteMol;
                             _this.setState({ label: r.name + " " + r.authSeqNumber + " " + r.chain.authAsymId });
                         }).bind(this));
                         CommonUtils.Selection.SelectionHelper.attachOnResidueLightSelectHandler((function (r) {
-                            _this.setState({ label: r.authSeqNumber + " " + r.chain.authAsymId });
+                            var name = CommonUtils.Residues.getName(r.authSeqNumber, _this.props.plugin);
+                            _this.setState({ label: name + " " + r.authSeqNumber + " " + r.chain.authAsymId });
                         }).bind(this));
                         CommonUtils.Selection.SelectionHelper.attachOnResidueBulkSelectHandler((function (r) {
                             var label = r.map(function (val, idx, array) {
-                                return val.authSeqNumber + " " + val.chain.authAsymId;
+                                var name = CommonUtils.Residues.getName(val.authSeqNumber, _this.props.plugin);
+                                return name + "&nbsp;" + val.authSeqNumber + "&nbsp;" + val.chain.authAsymId;
                             }).reduce(function (prev, cur, idx, array) {
-                                return "" + prev + ((idx === 0) ? '' : ', ') + cur;
+                                return "" + prev + ((idx === 0) ? '' : ',\n') + cur;
                             });
-                            _this.setState({ label: label });
+                            var items = label.split('\n');
+                            var elements = [];
+                            for (var _i = 0, items_2 = items; _i < items_2.length; _i++) {
+                                var e = items_2[_i];
+                                var lineParts = e.split('&nbsp;');
+                                elements.push(React.createElement("div", null,
+                                    lineParts[0],
+                                    "\u00A0",
+                                    lineParts[1],
+                                    "\u00A0",
+                                    lineParts[2]));
+                            }
+                            _this.setState({
+                                label: React.createElement("div", { className: "columns" }, elements)
+                            });
                         }).bind(this));
                         CommonUtils.Selection.SelectionHelper.attachOnClearSelectionHandler((function () {
                             _this.setState({ label: void 0 });

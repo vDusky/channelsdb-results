@@ -59,7 +59,9 @@ namespace LiningResidues.UI{
                     || i.source.props.tag.type == "MergedPore"){
                     
                     let layers = i.source.props.tag.element.Layers;
-                    app.setState({data:layers.ResidueFlow});
+                    app.setState({data:CommonUtils.Residues.sort(layers.ResidueFlow,void 0, true, true)});
+                    //console.log(layers.ResidueFlow);
+                    //app.setState({data:layers.ResidueFlow});
                     setTimeout(function(){
                         $( window ).trigger('contentResize');
                     },1);

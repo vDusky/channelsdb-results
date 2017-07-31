@@ -26,6 +26,7 @@
 
     //Common Utils
     "src/CommonUtils/Tunnels.ts",  
+    "src/CommonUtils/Residues.ts",
     "src/CommonUtils/Numbers.ts", 
     "src/CommonUtils/Selection.ts", 
     "src/CommonUtils/Tooltips.ts", 
