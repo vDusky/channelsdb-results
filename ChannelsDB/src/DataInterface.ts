@@ -78,8 +78,11 @@ namespace DataInterface{
     }
 
     export interface AnnotationObject{
-        Annotation: any,
-        Reference: string
+        Id: string,
+        Name: string,
+        Description: string,
+        Reference: string,
+        ReferenceType: string
     };
 
     //--

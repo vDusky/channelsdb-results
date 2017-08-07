@@ -140,6 +140,34 @@ var DataInterface;
     })(Annotations = DataInterface.Annotations || (DataInterface.Annotations = {}));
 })(DataInterface || (DataInterface = {}));
 ;
+var Bridge;
+(function (Bridge) {
+    var Events = (function () {
+        function Events() {
+        }
+        Events.subscribeChannelSelect = function (handler) {
+            var hndlrs = this.handlers.get("ChannelSelect");
+            if (hndlrs === void 0) {
+                hndlrs = [];
+            }
+            hndlrs.push(handler);
+            this.handlers.set("ChannelSelect", hndlrs);
+        };
+        Events.invokeChannelSelect = function (channelId) {
+            var hndlrs = this.handlers.get("ChannelSelect");
+            if (hndlrs === void 0) {
+                return;
+            }
+            for (var _i = 0, hndlrs_1 = hndlrs; _i < hndlrs_1.length; _i++) {
+                var h = hndlrs_1[_i];
+                h(channelId);
+            }
+        };
+        return Events;
+    }());
+    Events.handlers = new Map();
+    Bridge.Events = Events;
+})(Bridge || (Bridge = {}));
 var CommonUtils;
 (function (CommonUtils) {
     var Tunnels = (function () {
@@ -675,33 +703,26 @@ var Annotation;
         AnnotationDataProvider.parseChannelsData = function (data) {
             var map = LiteMol.Core.Utils.FastMap.create();
             for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
-                var item = data_1[_i];
-                for (var cid in item.Annotation) {
-                    var channelId = cid;
-                    if (channelId === null) {
-                        console.log("Found channel annotation wihtout id. Skipping...");
-                        continue;
-                    }
-                    if (item.Annotation[channelId] === void 0) {
-                        console.log("Found channel annotation without annotation text. Skipping...");
-                        continue;
-                    }
-                    var list = [];
-                    if (map.has(channelId)) {
-                        //Keep only first found annotation for channel -> maybe will be changed in the future
-                        //continue;
-                        var l = map.get(channelId);
-                        if (l !== void 0) {
-                            list = l;
-                        }
-                    }
-                    list.push({
-                        text: item.Annotation[channelId],
-                        reference: item.Reference,
-                        link: this.createLink("DOI", item.Reference)
-                    });
-                    map.set(channelId, list);
+                var annotation = data_1[_i];
+                var channelId = annotation.Id;
+                if (channelId === null) {
+                    console.log("Found channel annotation wihtout id. Skipping...");
+                    continue;
                 }
+                var list = [];
+                if (map.has(channelId)) {
+                    var l = map.get(channelId);
+                    if (l !== void 0) {
+                        list = l;
+                    }
+                }
+                list.push({
+                    text: annotation.Name,
+                    reference: annotation.Reference,
+                    description: annotation.Description,
+                    link: this.createLink(annotation.ReferenceType, annotation.Reference)
+                });
+                map.set(channelId, list);
             }
             return map;
         };
@@ -4242,6 +4263,170 @@ var AglomeredParameters;
         }(React.Component));
     })(UI = AglomeredParameters.UI || (AglomeredParameters.UI = {}));
 })(AglomeredParameters || (AglomeredParameters = {}));
+var ChannelsDescriptions;
+(function (ChannelsDescriptions) {
+    var UI;
+    (function (UI) {
+        var React = LiteMol.Plugin.React;
+        var LiteMoleEvent = LiteMol.Bootstrap.Event;
+        var DGComponents = Datagrid.Components;
+        var DGTABLE_COLS_COUNT = 2;
+        ;
+        function render(target, plugin) {
+            LiteMol.Plugin.ReactDOM.render(React.createElement(App, { controller: plugin }), target);
+        }
+        UI.render = render;
+        var App = (function (_super) {
+            __extends(App, _super);
+            function App() {
+                var _this = _super !== null && _super.apply(this, arguments) || this;
+                _this.interactionEventStream = void 0;
+                _this.state = {
+                    data: null,
+                    app: _this,
+                    isWaitingForData: false
+                };
+                return _this;
+            }
+            App.prototype.componentDidMount = function () {
+                var _this = this;
+                LiteMoleEvent.Tree.NodeAdded.getStream(this.props.controller.context).subscribe(function (e) {
+                    if (e.data.tree !== void 0 && e.data.ref === "mole-data") {
+                        var toShow = [];
+                        var data = e.data.props.data;
+                        toShow = toShow.concat(data.Channels.ReviewedChannels);
+                        toShow = toShow.concat(data.Channels.CSATunnels);
+                        toShow = toShow.concat(data.Channels.TransmembranePores);
+                        _this.setState({
+                            data: toShow
+                        });
+                    }
+                });
+            };
+            App.prototype.dataWaitHandler = function () {
+                this.setState({ isWaitingForData: false });
+            };
+            App.prototype.invokeDataWait = function () {
+                if (this.state.isWaitingForData) {
+                    return;
+                }
+                this.setState({ isWaitingForData: true });
+                Annotation.AnnotationDataProvider.subscribeForData(this.dataWaitHandler.bind(this));
+            };
+            App.prototype.componentWillUnmount = function () {
+            };
+            App.prototype.render = function () {
+                if (this.state.data !== null) {
+                    return (React.createElement("div", null,
+                        React.createElement(DGTable, __assign({}, this.state))));
+                }
+                return React.createElement("div", null);
+            };
+            return App;
+        }(React.Component));
+        UI.App = App;
+        var DGTable = (function (_super) {
+            __extends(DGTable, _super);
+            function DGTable() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            DGTable.prototype.render = function () {
+                return (React.createElement("div", { className: "datagrid", id: "dg-channels-descriptions" },
+                    React.createElement("div", { className: "header" },
+                        React.createElement(DGHead, __assign({}, this.props))),
+                    React.createElement("div", { className: "body" },
+                        React.createElement(DGBody, __assign({}, this.props)))));
+            };
+            return DGTable;
+        }(React.Component));
+        var DGHead = (function (_super) {
+            __extends(DGHead, _super);
+            function DGHead() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            DGHead.prototype.render = function () {
+                return (React.createElement("table", null,
+                    React.createElement("tr", null,
+                        React.createElement("th", { title: "Name", className: "col col-1" }, "Name"),
+                        React.createElement("th", { title: "Description", className: "col col-2" }, "Description"))));
+            };
+            ;
+            return DGHead;
+        }(React.Component));
+        var DGBody = (function (_super) {
+            __extends(DGBody, _super);
+            function DGBody() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            DGBody.prototype.generateRows = function () {
+                if (this.props.data === null) {
+                    return [
+                        React.createElement("tr", null,
+                            React.createElement("td", { colSpan: DGTABLE_COLS_COUNT }, "There are no data to be displayed...")),
+                        React.createElement(DGComponents.DGRowEmpty, { columnsCount: DGTABLE_COLS_COUNT })
+                    ];
+                }
+                var rows = [];
+                for (var _i = 0, _a = this.props.data; _i < _a.length; _i++) {
+                    var tunnel = _a[_i];
+                    var mainAnnotation = Annotation.AnnotationDataProvider.getChannelAnnotation(tunnel.Id);
+                    var annotations = Annotation.AnnotationDataProvider.getChannelAnnotations(tunnel.Id);
+                    if (annotations === void 0 || mainAnnotation === void 0) {
+                        this.props.app.invokeDataWait();
+                    }
+                    if (annotations !== void 0 && annotations !== null && mainAnnotation !== void 0 && mainAnnotation !== null) {
+                        for (var _b = 0, annotations_1 = annotations; _b < annotations_1.length; _b++) {
+                            var annotation = annotations_1[_b];
+                            var name_3 = mainAnnotation.text + " / " + annotation.text;
+                            if (mainAnnotation.text === annotation.text) {
+                                name_3 = mainAnnotation.text;
+                            }
+                            var description = annotation.description;
+                            if (description === "") {
+                                continue;
+                            }
+                            rows.push(React.createElement(DGRow, { tunnelName: name_3, description: description, channelId: tunnel.Id, app: this.props.app }));
+                        }
+                    }
+                }
+                if (rows.length === 0) {
+                    return [
+                        React.createElement("tr", null,
+                            React.createElement("td", { colSpan: DGTABLE_COLS_COUNT }, "There are no data to be displayed...")),
+                        React.createElement(DGComponents.DGRowEmpty, { columnsCount: DGTABLE_COLS_COUNT })
+                    ];
+                }
+                rows.push(React.createElement(DGComponents.DGRowEmpty, { columnsCount: DGTABLE_COLS_COUNT }));
+                return rows;
+            };
+            DGBody.prototype.render = function () {
+                var rows = this.generateRows();
+                return (React.createElement("table", null, rows));
+            };
+            ;
+            return DGBody;
+        }(React.Component));
+        var DGRow = (function (_super) {
+            __extends(DGRow, _super);
+            function DGRow() {
+                return _super !== null && _super.apply(this, arguments) || this;
+            }
+            DGRow.prototype.selectChannel = function (channelId) {
+                Bridge.Events.invokeChannelSelect(channelId);
+            };
+            DGRow.prototype.render = function () {
+                var _this = this;
+                var name = this.props.tunnelName;
+                var description = this.props.description;
+                return (React.createElement("tr", null,
+                    React.createElement("td", { className: "col col-1" },
+                        React.createElement("a", { className: "hand", onClick: function () { return _this.selectChannel(_this.props.channelId); } }, name)),
+                    React.createElement("td", { className: "col col-2" }, description)));
+            };
+            return DGRow;
+        }(React.Component));
+    })(UI = ChannelsDescriptions.UI || (ChannelsDescriptions.UI = {}));
+})(ChannelsDescriptions || (ChannelsDescriptions = {}));
 var LayerProperties;
 (function (LayerProperties) {
     var UI;
@@ -4555,8 +4740,8 @@ var LayerResidues;
                 var residueNameEl = (this.isBackbone(residue)) ? React.createElement("i", null,
                     React.createElement("strong", null, this.shortenBackbone(residue))) : React.createElement("span", null, residue);
                 var first = true;
-                for (var _i = 0, annotations_1 = annotations; _i < annotations_1.length; _i++) {
-                    var annotation = annotations_1[_i];
+                for (var _i = 0, annotations_2 = annotations; _i < annotations_2.length; _i++) {
+                    var annotation = annotations_2[_i];
                     if (first === true) {
                         first = false;
                         trs.push(React.createElement("tr", null,
@@ -4792,8 +4977,8 @@ var ResidueAnnotations;
                 var _this = this;
                 var trs = [];
                 var first = true;
-                for (var _i = 0, annotations_2 = annotations; _i < annotations_2.length; _i++) {
-                    var annotation = annotations_2[_i];
+                for (var _i = 0, annotations_3 = annotations; _i < annotations_3.length; _i++) {
+                    var annotation = annotations_3[_i];
                     if (first === true) {
                         first = false;
                         trs.push(React.createElement("tr", { className: (annotation.isLining) ? "highlight" : "" },
@@ -4975,8 +5160,8 @@ var ProteinAnnotations;
             DGBody.prototype.generateSpannedRows = function (residue, annotations) {
                 var trs = [];
                 var first = true;
-                for (var _i = 0, annotations_3 = annotations; _i < annotations_3.length; _i++) {
-                    var annotation = annotations_3[_i];
+                for (var _i = 0, annotations_4 = annotations; _i < annotations_4.length; _i++) {
+                    var annotation = annotations_4[_i];
                     if (first === true) {
                         first = false;
                         trs.push(React.createElement("tr", { className: (annotation.isLining) ? "highlight" : "" },
@@ -4998,8 +5183,8 @@ var ProteinAnnotations;
                 }
                 var annotations = this.props.data;
                 var rows = [];
-                for (var _i = 0, annotations_4 = annotations; _i < annotations_4.length; _i++) {
-                    var annotation = annotations_4[_i];
+                for (var _i = 0, annotations_5 = annotations; _i < annotations_5.length; _i++) {
+                    var annotation = annotations_5[_i];
                     var noDataText = "No data provided";
                     rows.push(React.createElement(DGComponents.DGRow, { columns: ["Name:", annotation.name], trClass: "highlight hl-main" }));
                     rows.push(React.createElement(DGComponents.DGElementRow, { columns: [React.createElement("span", null, "UniProt Id:"), React.createElement("a", { href: annotation.link, target: "_blank" }, annotation.uniProtId)] }));
@@ -5228,8 +5413,8 @@ var LiningResidues;
                 var trs = [];
                 var residueNameEl = this.getSelect3DLink(residue); //(this.isBackbone(residue))?<i><strong>{this.shortenBackbone(residue)}</strong></i>:<span>{residue}</span>;
                 var first = true;
-                for (var _i = 0, annotations_5 = annotations; _i < annotations_5.length; _i++) {
-                    var annotation = annotations_5[_i];
+                for (var _i = 0, annotations_6 = annotations; _i < annotations_6.length; _i++) {
+                    var annotation = annotations_6[_i];
                     if (first === true) {
                         first = false;
                         trs.push(React.createElement("tr", { title: (this.isBackbone(residue) ? residue : ""), className: (this.isBackbone(residue) ? "help" : "") },
@@ -6569,6 +6754,14 @@ var LiteMol;
                         _this.state = { isVisible: false, isWaitingForData: false };
                         return _this;
                     }
+                    Channel.prototype.componentDidMount = function () {
+                        var _this = this;
+                        Bridge.Events.subscribeChannelSelect((function (channelId) {
+                            if (_this.props.channel.Id === channelId) {
+                                _this.selectChannel();
+                            }
+                        }).bind(this));
+                    };
                     Channel.prototype.dataWaitHandler = function () {
                         this.setState({ isWaitingForData: false });
                     };
@@ -6605,10 +6798,12 @@ var LiteMol;
                     Channel.prototype.selectChannel = function () {
                         var _this = this;
                         var entity = this.props.state.plugin.context.select(this.props.channel.__id)[0];
-                        if (entity == void 0) {
+                        if (entity === void 0 || entity.ref === "undefined") {
                             Channels_1.State.showChannelVisuals(this.props.state.plugin, [this.props.channel], true);
                             this.setState({ isVisible: true });
-                            window.setTimeout((function () { _this.selectChannel(); }).bind(this), 50);
+                            window.setTimeout((function () {
+                                _this.selectChannel();
+                            }).bind(this), 50);
                             return;
                         }
                         var channelRef = entity.ref;
@@ -6861,6 +7056,7 @@ var LiteMol;
                 Channels.UI.render(plugin, document.getElementById('ui'));
                 Vizualizer.UI.render(layerVizualizer, document.getElementById('layer-vizualizer-ui'), plugin);
                 AglomeredParameters.UI.render(document.getElementById('left-tabs-2'), plugin);
+                ChannelsDescriptions.UI.render(document.getElementById('left-tabs-3'), plugin);
                 //LayerProperties.UI.render(document.getElementById("right-tabs-1") !, plugin);
                 LayerProperties.UI.render(document.getElementById("layer-properties"), plugin);
                 //LayerResidues.UI.render(document.getElementById("right-tabs-2") !, plugin);

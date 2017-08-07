@@ -24,6 +24,9 @@
     //Data Interface
     "src/DataInterface.ts",
 
+    //Bridge
+    "src/Bridge.ts",
+
     //Common Utils
     "src/CommonUtils/Tunnels.ts",  
     "src/CommonUtils/Residues.ts",
@@ -46,6 +49,9 @@
 
     //Aglomered parameters
     "src/AglomeredParameters/UI.tsx",     
+
+    //ChannelsDescriptions
+    "src/ChannelsDescriptions/UI.tsx",  
 
     //Layer Properties
     "src/LayerProperties/UI.tsx",   

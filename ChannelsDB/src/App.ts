@@ -52,6 +52,8 @@ namespace LiteMol.Example.Channels {
         Vizualizer.UI.render(layerVizualizer, document.getElementById('layer-vizualizer-ui') !, plugin);
 
         AglomeredParameters.UI.render(document.getElementById('left-tabs-2') !, plugin);
+
+        ChannelsDescriptions.UI.render(document.getElementById('left-tabs-3') !, plugin);
         
         //LayerProperties.UI.render(document.getElementById("right-tabs-1") !, plugin);
         LayerProperties.UI.render(document.getElementById("layer-properties") !, plugin);

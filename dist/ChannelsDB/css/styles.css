@@ -167,6 +167,10 @@
   .bottom-panel-toggled .aglomered-parameters .aglomered-parameters-ui {
     height: 53vh; } }
 
+#dg-channels-descriptions.datagrid .col.col-1 {
+  min-width: 160px;
+  width: 30%; }
+
 .download-button .glyphicon.glyphicon-download {
   vertical-align: text-bottom;
   font-size: 13pt; }

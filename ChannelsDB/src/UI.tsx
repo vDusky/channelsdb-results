@@ -304,7 +304,6 @@ namespace LiteMol.Example.Channels.UI {
         }
 
         render() {           
-
             let emptyToggler = <span className="disabled glyphicon glyphicon-chevron-down" title="No annotations available for this channel" onClick={this.toggleAnnotations.bind(this)} />
             return <div className="ui-label">
                 <input type='checkbox' checked={!!this.props.element.__isVisible} onChange={() => this.toggle()} disabled={!!this.props.element.__isBusy} />
@@ -343,6 +342,14 @@ namespace LiteMol.Example.Channels.UI {
     export class Channel extends React.Component<{state:State, channel: any }, { isVisible: boolean, isWaitingForData:boolean }> {
         state = { isVisible: false, isWaitingForData: false };
 
+        componentDidMount(){
+            Bridge.Events.subscribeChannelSelect(((channelId:string)=>{
+                if(this.props.channel.Id === channelId){
+                    this.selectChannel();
+                }
+            }).bind(this));
+        }
+
         private dataWaitHandler(){
             this.setState({isWaitingForData:false});
         }
@@ -376,10 +383,12 @@ namespace LiteMol.Example.Channels.UI {
 
         private selectChannel(){
             let entity = this.props.state.plugin.context.select(this.props.channel.__id)[0];
-            if(entity == void 0){
+            if(entity === void 0 || entity.ref === "undefined"){
                 State.showChannelVisuals(this.props.state.plugin,[this.props.channel],true);
                 this.setState({isVisible:true});
-                window.setTimeout((()=>{this.selectChannel()}).bind(this),50);
+                window.setTimeout((()=>{
+                    this.selectChannel();
+                }).bind(this),50);
                 return;
             }
             let channelRef = entity.ref;

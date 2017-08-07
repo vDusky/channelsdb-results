@@ -12,6 +12,7 @@ namespace Annotation{
     export interface ChannelAnnotation{
         text: string,
         reference: string,
+        description: string,
         link: string
     };
     export interface ProteinAnnotation{
@@ -47,37 +48,30 @@ namespace Annotation{
         private static parseChannelsData(data:DataInterface.AnnotationObject[]){
             let map = LiteMol.Core.Utils.FastMap.create<string,ChannelAnnotation[]>();
 
-            for(let item of data){               
-                for(let cid in item.Annotation){
-                    let channelId = cid;
-                    
-                    if(channelId === null){
-                        console.log("Found channel annotation wihtout id. Skipping...");
-                        continue;
-                    }
-
-                    if(item.Annotation[channelId] === void 0){
-                        console.log("Found channel annotation without annotation text. Skipping...");
-                        continue;
-                    }
-                    let list:ChannelAnnotation[] = [];
-                    if(map.has(channelId)){
-                        //Keep only first found annotation for channel -> maybe will be changed in the future
-                        //continue;
-                        let l = map.get(channelId);
-                        if(l!==void 0){
-                            list = l;
-                        }
-                    }
-                    list.push(
-                        {
-                            text: item.Annotation[channelId] as string,
-                            reference: item.Reference,
-                            link: this.createLink("DOI", item.Reference)
-                        }
-                    );
-                    map.set(channelId,list);
+            for(let annotation of data){               
+                let channelId = annotation.Id
+                
+                if(channelId === null){
+                    console.log("Found channel annotation wihtout id. Skipping...");
+                    continue;
                 }
+
+                let list:ChannelAnnotation[] = [];
+                if(map.has(channelId)){
+                    let l = map.get(channelId);
+                    if(l!==void 0){
+                        list = l;
+                    }
+                }
+                list.push(
+                    {
+                        text: annotation.Name,
+                        reference: annotation.Reference,
+                        description: annotation.Description,
+                        link: this.createLink(annotation.ReferenceType, annotation.Reference)
+                    }
+                );
+                map.set(channelId,list);
             }
 
             return map;
