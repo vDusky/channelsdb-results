@@ -1,5 +1,5 @@
 div#left-tabs-2,
-div#right-tabs-1,
+/*div#right-tabs-1,*/
 div#right-tabs-2,
 div#right-tabs-3 {
     padding: 0 !important;
@@ -9,9 +9,9 @@ div#right-tabs-3 {
 	position:absolute;
 	bottom:0;
 	width:100%;
-	padding-top:9px;
+	padding-top: 4px;
 	padding-bottom:6px;
-	padding-right:6px;
+	padding-right:4px;
 	overflow: hidden;
 }	
 .datagrid .header{

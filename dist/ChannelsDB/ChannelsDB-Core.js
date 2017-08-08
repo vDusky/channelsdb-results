@@ -688,6 +688,44 @@ var CommonUtils;
         Tooltips.hasTooltipText = hasTooltipText;
     })(Tooltips = CommonUtils.Tooltips || (CommonUtils.Tooltips = {}));
 })(CommonUtils || (CommonUtils = {}));
+var CommonUtils;
+(function (CommonUtils) {
+    var Tabs;
+    (function (Tabs) {
+        function getTabLinkById(tabbedElementId, tabId) {
+            var tabs = $("#" + tabbedElementId + " li a");
+            for (var _i = 0, tabs_1 = tabs; _i < tabs_1.length; _i++) {
+                var t = tabs_1[_i];
+                if ($(t).attr('href') === "#" + tabbedElementId + "-" + tabId) {
+                    return $(t);
+                }
+            }
+        }
+        Tabs.getTabLinkById = getTabLinkById;
+        function isActive(tabbedElementId, tabId) {
+            return getTabLinkById(tabbedElementId, tabId).parent().attr("class").indexOf("active") >= 0;
+        }
+        Tabs.isActive = isActive;
+        function activateTab(tabbedElementId, tabId) {
+            getTabLinkById(tabbedElementId, tabId).click();
+        }
+        Tabs.activateTab = activateTab;
+        function doAfterTabActivated(tabbedElementId, tabId, callback) {
+            var checker = function () {
+                var link = getTabLinkById(tabbedElementId, tabId);
+                var href = link.attr("href");
+                if (link.parent().attr("class").indexOf("active") >= 0 && $(href).css("display") !== "none") {
+                    callback();
+                }
+                else {
+                    window.setTimeout(checker, 10);
+                }
+            };
+            window.setTimeout(checker, 10);
+        }
+        Tabs.doAfterTabActivated = doAfterTabActivated;
+    })(Tabs = CommonUtils.Tabs || (CommonUtils.Tabs = {}));
+})(CommonUtils || (CommonUtils = {}));
 var Annotation;
 (function (Annotation) {
     var LiteMoleEvent = LiteMol.Bootstrap.Event;
@@ -1014,6 +1052,7 @@ var LayersVizualizer;
         var Transformer = LiteMol.Bootstrap.Entity.Transformer;
         var Visualization = LiteMol.Bootstrap.Visualization;
         var Tooltips = CommonUtils.Tooltips;
+        var Tabs = CommonUtils.Tabs;
         ;
         function render(vizualizer, target, plugin) {
             LiteMol.Plugin.ReactDOM.render(React.createElement(App, { vizualizer: vizualizer, controller: plugin }), target);
@@ -1065,12 +1104,14 @@ var LayersVizualizer;
                         || i.source.props.tag.type == "MergedPore") {
                         window.setTimeout(function () {
                             app.setState({ currentTunnelRef: i.source.ref, isLayerSelected: false });
-                            $('#left-tabs').tabs("option", "active", 0);
+                            Tabs.activateTab("left-tabs", "1");
                             var layers = DataInterface.convertLayersToLayerData(i.source.props.tag.element.Layers);
-                            vizualizer.setData(layers);
-                            app.setState({ data: layers, hasData: true, isDOMReady: false, instanceId: vizualizer.getPublicInstanceIdx() });
-                            vizualizer.vizualize();
-                            app.setState({ data: layers, hasData: true, isDOMReady: true, instanceId: vizualizer.getPublicInstanceIdx() });
+                            Tabs.doAfterTabActivated("left-tabs", "1", function () {
+                                vizualizer.setData(layers);
+                                app.setState({ data: layers, hasData: true, isDOMReady: false, instanceId: vizualizer.getPublicInstanceIdx() });
+                                vizualizer.vizualize();
+                                app.setState({ data: layers, hasData: true, isDOMReady: true, instanceId: vizualizer.getPublicInstanceIdx() });
+                            });
                         }, 50);
                         //Testing themes... TODO: remove/move to another location...
                         //app.applyTheme(app.generateColorTheme(),app.props.controller,app.state.currentTunnelRef);                    
@@ -1078,7 +1119,7 @@ var LayersVizualizer;
                 };
                 this.interactionEventStream = Event.Visual.VisualSelectElement.getStream(this.props.controller.context)
                     .subscribe(function (e) { return interactionHandler('select', e.data, _this); });
-                $(window).on("lvCcontentResize", (function () {
+                $(window).on("lvContentResize", (function () {
                     _this.forceUpdate();
                 }).bind(this));
                 $(window).on("resize", (function () {
@@ -1127,21 +1168,6 @@ var LayersVizualizer;
             };
             return Hint;
         }(React.Component));
-        /*
-            function getMessageOrLeaveText(text:string){
-                let message = StaticData.Messages.get(text);
-                if(message === void 0){
-                    return text;
-                }
-        
-                return message;
-            }
-        
-            function hasTooltipText(messageKey:string){
-                let message = StaticData.Messages.get(`tooltip-${messageKey}`);
-                return (message !== void 0);
-            }
-        */
         var ColorMenuItem = (function (_super) {
             __extends(ColorMenuItem, _super);
             function ColorMenuItem() {
@@ -1157,11 +1183,9 @@ var LayersVizualizer;
                     return;
                 }
                 if (this.props.isCustom) {
-                    console.log("setting custom property key: " + propertyName);
                     instance.setCustomColoringPropertyKey(propertyName);
                 }
                 else {
-                    console.log("setting regular property key: " + propertyName);
                     instance.setColoringPropertyKey(propertyName);
                 }
                 instance.vizualize();
@@ -2398,7 +2422,7 @@ var LayersVizualizer;
             }
             var canvas = this.getCanvas();
             var context = this.getContext();
-            if (canvas === void 0 || context === void 0 || !this.isElementVisible(canvas)) {
+            if (canvas === void 0 || context === void 0 || !this.isElementVisible(canvas) || !CommonUtils.Tabs.isActive("left-tabs", "1")) {
                 return;
             }
             this.resizeCanvas();

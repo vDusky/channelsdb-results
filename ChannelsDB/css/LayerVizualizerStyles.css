@@ -18,9 +18,9 @@
 	position:relative;
 	/*margin:auto auto;*/
 	/*margin-top:10px;*/
-	width:98%;
-	padding-left:1%;
-	padding-right:1%;
+	width:99%;
+	/*padding-left:1%;
+	padding-right:1%;*/
 	height:24vh;/**/
 }
 .wrapper-container{
@@ -28,6 +28,8 @@
     position: absolute;
     left: 0;
 	margin: auto auto;
+	padding-top: 3px;
+    padding-left: 4px;
 }
 .bottom-panel-toggled .wrapper-container,
 .bottom-panel-toggled .bottom-tabs-toggled .wrapper-container{
@@ -143,7 +145,8 @@
 	position:absolute;
 	top:0;
 	right:0;
-	padding-right:5px;
+	padding-right:3px;
+	padding-top: 3px;
 }
 
 .layerVizualizer * .controls .export-button,

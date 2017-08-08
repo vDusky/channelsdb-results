@@ -237,9 +237,9 @@ button.download.dropdown-toggle {
   position: relative;
   /*margin:auto auto;*/
   /*margin-top:10px;*/
-  width: 98%;
-  padding-left: 1%;
-  padding-right: 1%;
+  width: 99%;
+  /*padding-left:1%;
+	padding-right:1%;*/
   height: 24vh;
   /**/ }
 
@@ -248,7 +248,9 @@ button.download.dropdown-toggle {
   /*65*/
   position: absolute;
   left: 0;
-  margin: auto auto; }
+  margin: auto auto;
+  padding-top: 3px;
+  padding-left: 4px; }
 
 .bottom-panel-toggled .wrapper-container,
 .bottom-panel-toggled .bottom-tabs-toggled .wrapper-container {
@@ -356,7 +358,8 @@ button.download.dropdown-toggle {
   position: absolute;
   top: 0;
   right: 0;
-  padding-right: 5px; }
+  padding-right: 3px;
+  padding-top: 3px; }
 
 .layerVizualizer * .controls .export-button,
 .layerVizualizer * .controls .color-bounds-button-container {
@@ -5890,7 +5893,6 @@ button.close {
 /*# sourceMappingURL=bootstrap.min.css.map */
 
 div#left-tabs-2,
-div#right-tabs-1,
 div#right-tabs-2,
 div#right-tabs-3 {
   padding: 0 !important; }
@@ -5899,9 +5901,9 @@ div#right-tabs-3 {
   position: absolute;
   bottom: 0;
   width: 100%;
-  padding-top: 9px;
+  padding-top: 4px;
   padding-bottom: 6px;
-  padding-right: 6px;
+  padding-right: 4px;
   overflow: hidden; }
 
 .datagrid .header {
@@ -7865,8 +7867,8 @@ only screen and (max-height: 600px) {
   position: absolute;
   right: 0;
   top: 0;
-  margin-top: .4em;
-  margin-right: .4em; }
+  margin-top: .6em;
+  margin-right: .8em; }
 
 .tabs {
   border-radius: 0 !important; }
@@ -8131,6 +8133,67 @@ span.ATable-label {
 
 .chdb-panel.right-panel .bt-all {
   margin-right: 2px; }
+
+#right-tabs,
+#left-tabs,
+#right-panel-tabs {
+  height: 100%;
+  margin-right: 2px;
+  padding-left: 3px; }
+
+#left-tabs {
+  padding-left: 0px; }
+
+#right-tabs .datagrid {
+  padding-right: 7px; }
+
+#right-tabs .datagrid,
+#right-panel-tabs .datagrid {
+  border-left: 1px solid #9a9a9a;
+  padding-left: 2px; }
+
+#right-tabs-1 .datagrid {
+  border-left: 0;
+  padding-left: 0; }
+
+#right-tabs-1 {
+  border-left: 1px solid #9a9a9a;
+  padding-left: 2px; }
+
+#left-tabs .tab-content {
+  padding-left: 2px;
+  margin-right: 2px; }
+
+.nav > li > a {
+  padding: 2px 8px; }
+
+.nav {
+  padding-top: 4px; }
+
+#left-tabs .nav {
+  padding-left: 4px; }
+
+.nav-tabs {
+  border-bottom: 1px solid #ddd;
+  border-bottom-color: #9a9a9a; }
+
+.nav-tabs > li.active > a,
+.nav-tabs > li.active > a:focus,
+.nav-tabs > li.active > a:hover {
+  color: #333;
+  background-color: #fff;
+  border-top-color: #9a9a9a;
+  border-right-color: #9a9a9a;
+  border-left-color: #9a9a9a; }
+
+.nav-tabs > li > a:focus,
+.nav-tabs > li > a:hover {
+  background-color: #9a9a9a;
+  border-bottom-color: #9a9a9a;
+  color: white; }
+
+.nav-tabs > li > a {
+  color: #333; }
 
 @media only screen and (max-width: 1360px) {
   #dg-aglomered-parameters.datagrid .col.col-4 {

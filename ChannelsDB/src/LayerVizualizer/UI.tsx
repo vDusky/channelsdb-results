@@ -12,6 +12,7 @@ namespace LayersVizualizer.UI{
     import Visualization = LiteMol.Bootstrap.Visualization;   
 
     import Tooltips = CommonUtils.Tooltips;
+    import Tabs = CommonUtils.Tabs;
 
     declare function $(p:any): any;
 
@@ -82,12 +83,14 @@ namespace LayersVizualizer.UI{
                     || i.source.props.tag.type == "MergedPore"){
                     window.setTimeout(()=>{
                         app.setState({currentTunnelRef: i.source.ref, isLayerSelected: false});
-                        $('#left-tabs').tabs("option", "active", 0);
+                        Tabs.activateTab("left-tabs","1");
                         let layers = DataInterface.convertLayersToLayerData(i.source.props.tag.element.Layers);
-                        vizualizer.setData(layers);
-                        app.setState({data: layers, hasData: true, isDOMReady:false, instanceId: vizualizer.getPublicInstanceIdx()});
-                        vizualizer.vizualize();  
-                        app.setState({data: layers, hasData: true, isDOMReady:true, instanceId: vizualizer.getPublicInstanceIdx()});
+                        Tabs.doAfterTabActivated("left-tabs","1",()=>{
+                            vizualizer.setData(layers);
+                            app.setState({data: layers, hasData: true, isDOMReady:false, instanceId: vizualizer.getPublicInstanceIdx()});
+                            vizualizer.vizualize();  
+                            app.setState({data: layers, hasData: true, isDOMReady:true, instanceId: vizualizer.getPublicInstanceIdx()});
+                        });
                     },50);
                     //Testing themes... TODO: remove/move to another location...
                     //app.applyTheme(app.generateColorTheme(),app.props.controller,app.state.currentTunnelRef);                    
@@ -98,7 +101,7 @@ namespace LayersVizualizer.UI{
             this.interactionEventStream = Event.Visual.VisualSelectElement.getStream(this.props.controller.context)
                 .subscribe(e => interactionHandler('select', e.data as ChannelEventInfo, this));
 
-            $( window ).on("lvCcontentResize",(()=>{
+            $( window ).on("lvContentResize",(()=>{
                 this.forceUpdate();
             }).bind(this));
             $( window ).on("resize",(()=>{
@@ -166,21 +169,7 @@ namespace LayersVizualizer.UI{
             );
         }
     }
-/*
-    function getMessageOrLeaveText(text:string){
-        let message = StaticData.Messages.get(text);
-        if(message === void 0){
-            return text;
-        }
 
-        return message;
-    }
-
-    function hasTooltipText(messageKey:string){
-        let message = StaticData.Messages.get(`tooltip-${messageKey}`);
-        return (message !== void 0);
-    }
-*/
     class ColorMenuItem extends React.Component<State & {propertyName:string, isCustom:boolean},{}>{
         private changeColoringProperty(e: React.MouseEvent<HTMLAreaElement>){
             let targetElement = (e.target as HTMLElement);
@@ -194,11 +183,9 @@ namespace LayersVizualizer.UI{
             }
 
             if(this.props.isCustom){
-                console.log(`setting custom property key: ${propertyName}`);
                 instance.setCustomColoringPropertyKey(propertyName);
             }
             else{
-                console.log(`setting regular property key: ${propertyName}`);
                 instance.setColoringPropertyKey(propertyName);                   
             }
 

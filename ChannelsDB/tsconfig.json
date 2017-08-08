@@ -33,6 +33,7 @@
     "src/CommonUtils/Numbers.ts", 
     "src/CommonUtils/Selection.ts", 
     "src/CommonUtils/Tooltips.ts", 
+    "src/CommonUtils/Tabs.ts", 
 
     //Annotation data provider
     "src/AnnotationDataProvider.ts", 
