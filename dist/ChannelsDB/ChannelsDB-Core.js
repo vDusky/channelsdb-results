@@ -4364,6 +4364,7 @@ var ChannelsDescriptions;
                     if (e.data.tree !== void 0 && e.data.ref === "mole-data") {
                         var toShow = [];
                         var data = e.data.props.data;
+                        toShow = toShow.concat(data.Channels.CofactorTunnels);
                         toShow = toShow.concat(data.Channels.ReviewedChannels);
                         toShow = toShow.concat(data.Channels.CSATunnels);
                         toShow = toShow.concat(data.Channels.TransmembranePores);
@@ -5276,7 +5277,6 @@ var LiningResidues;
     (function (UI) {
         var DGComponents = Datagrid.Components;
         var React = LiteMol.Plugin.React;
-        var LiteMoleEvent = LiteMol.Bootstrap.Event;
         var DGTABLE_COLS_COUNT = 2;
         var NO_DATA_MESSAGE = "Select channel in 3D view for details...";
         ;
@@ -5300,25 +5300,15 @@ var LiningResidues;
             }
             App.prototype.componentDidMount = function () {
                 var _this = this;
-                var interactionHandler = function showInteraction(type, i, app) {
-                    if (!i || i.source == null || i.source.props.tag === void 0 || i.source.props.tag.type === void 0) {
+                CommonUtils.Selection.SelectionHelper.attachOnChannelSelectHandler(function (data) {
+                    if (data === null) {
                         return;
                     }
-                    if (i.source.props.tag.type == "Tunnel"
-                        || i.source.props.tag.type == "Path"
-                        || i.source.props.tag.type == "Pore"
-                        || i.source.props.tag.type == "MergedPore") {
-                        var layers = i.source.props.tag.element.Layers;
-                        app.setState({ data: CommonUtils.Residues.sort(layers.ResidueFlow, void 0, true, true) });
-                        //console.log(layers.ResidueFlow);
-                        //app.setState({data:layers.ResidueFlow});
-                        setTimeout(function () {
-                            $(window).trigger('contentResize');
-                        }, 1);
-                    }
-                };
-                this.interactionEventStream = LiteMoleEvent.Visual.VisualSelectElement.getStream(this.props.controller.context)
-                    .subscribe(function (e) { return interactionHandler('select', e.data, _this); });
+                    _this.setState({ data: CommonUtils.Residues.sort(data.ResidueFlow, void 0, true, true) });
+                    setTimeout(function () {
+                        $(window).trigger('contentResize');
+                    }, 1);
+                });
             };
             App.prototype.dataWaitHandler = function () {
                 this.setState({ isWaitingForData: false });

@@ -48,29 +48,17 @@ namespace LiningResidues.UI{
         layerIdx = -1;
 
         componentDidMount() {
-            var interactionHandler = function showInteraction(type: string, i: ChannelEventInfo | undefined, app: App) {
-                if (!i || i.source == null || i.source.props.tag === void 0 || i.source.props.tag.type === void 0) {
-                    return;    
+            CommonUtils.Selection.SelectionHelper.attachOnChannelSelectHandler((data)=>{
+                if(data===null){
+                    return;
                 }
 
-                if(i.source.props.tag.type == "Tunnel" 
-                    || i.source.props.tag.type == "Path"
-                    || i.source.props.tag.type == "Pore"
-                    || i.source.props.tag.type == "MergedPore"){
-                    
-                    let layers = i.source.props.tag.element.Layers;
-                    app.setState({data:CommonUtils.Residues.sort(layers.ResidueFlow,void 0, true, true)});
-                    //console.log(layers.ResidueFlow);
-                    //app.setState({data:layers.ResidueFlow});
-                    setTimeout(function(){
-                        $( window ).trigger('contentResize');
-                    },1);
-                }
-                
-            }
+                this.setState({data:CommonUtils.Residues.sort(data.ResidueFlow,void 0, true, true)});
 
-            this.interactionEventStream = LiteMoleEvent.Visual.VisualSelectElement.getStream(this.props.controller.context)
-                .subscribe(e => interactionHandler('select', e.data as ChannelEventInfo, this));
+                setTimeout(function(){
+                    $( window ).trigger('contentResize');
+                },1);
+            });
         }
 
         private dataWaitHandler(){
