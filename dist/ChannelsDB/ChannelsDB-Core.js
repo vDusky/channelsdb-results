@@ -415,14 +415,48 @@ var CommonUtils;
                     h.handler();
                 }
             };
+            SelectionHelper.attachOnChannelSelectHandler = function (handler) {
+                if (this.onChannelSelectHandlers === void 0) {
+                    this.onChannelSelectHandlers = [];
+                }
+                this.onChannelSelectHandlers.push({ handler: handler });
+            };
+            SelectionHelper.invokeOnChannelSelectHandlers = function (data) {
+                if (this.onChannelSelectHandlers === void 0) {
+                    return;
+                }
+                for (var _i = 0, _a = this.onChannelSelectHandlers; _i < _a.length; _i++) {
+                    var h = _a[_i];
+                    h.handler(data);
+                }
+            };
+            SelectionHelper.attachOnChannelDeselectHandler = function (handler) {
+                if (this.onChannelDeselectHandlers === void 0) {
+                    this.onChannelDeselectHandlers = [];
+                }
+                this.onChannelDeselectHandlers.push({ handler: handler });
+            };
+            SelectionHelper.invokeOnChannelDeselectHandlers = function () {
+                if (this.onChannelDeselectHandlers === void 0) {
+                    return;
+                }
+                for (var _i = 0, _a = this.onChannelDeselectHandlers; _i < _a.length; _i++) {
+                    var h = _a[_i];
+                    h.handler();
+                }
+            };
             SelectionHelper.getSelectionVisualRef = function () {
                 return this.SELECTION_VISUAL_REF;
+            };
+            SelectionHelper.getAltSelectionVisualRef = function () {
+                return this.SELECTION_ALT_VISUAL_REF;
             };
             SelectionHelper.clearSelection = function (plugin) {
                 this.clearSelectionPrivate(plugin);
                 this.selectedBulkResidues = void 0;
                 this.selectedResidue = void 0;
                 this.selectedChannelRef = void 0;
+                this.selectedChannelData = void 0;
                 this.resetScene(plugin);
             };
             SelectionHelper.clearSelectionPrivate = function (plugin) {
@@ -431,7 +465,11 @@ var CommonUtils;
                     deselectTunnelByRef(plugin, this.selectedChannelRef);
                 }
                 setTimeout(function () { return LiteMol.Bootstrap.Event.Visual.VisualSelectElement.dispatch(plugin.context, LiteMol.Bootstrap.Interactivity.Info.empty); }, 0);
+                this.clearAltSelection(plugin);
                 this.invokeOnClearSelectionHandlers();
+            };
+            SelectionHelper.clearAltSelection = function (plugin) {
+                LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(plugin.context, this.SELECTION_ALT_VISUAL_REF);
             };
             SelectionHelper.resetScene = function (plugin) {
                 LiteMol.Bootstrap.Command.Visual.ResetScene.dispatch(plugin.context, void 0);
@@ -492,6 +530,7 @@ var CommonUtils;
             SelectionHelper.selectResiduesBulkWithBallsAndSticks = function (plugin, residues) {
                 CommonUtils.Selection.SelectionHelper.clearSelectionPrivate(plugin);
                 this.selectedChannelRef = void 0;
+                this.selectedChannelData = void 0;
                 this.selectedBulkResidues = void 0;
                 this.resetScene(plugin);
                 if (this.selectedBulkResidues !== void 0) {
@@ -524,6 +563,7 @@ var CommonUtils;
                 var query = LiteMol.Core.Structure.Query.chainsById(residue.chain.authAsymId).intersectWith((_a = LiteMol.Core.Structure.Query).residues.apply(_a, [{ authSeqNumber: residue.authSeqNumber }]));
                 CommonUtils.Selection.SelectionHelper.clearSelectionPrivate(plugin);
                 this.selectedChannelRef = void 0;
+                this.selectedChannelData = void 0;
                 this.selectedBulkResidues = void 0;
                 this.resetScene(plugin);
                 if (this.selectedResidue !== void 0) {
@@ -574,6 +614,7 @@ var CommonUtils;
                     .intersectWith(LiteMol.Core.Structure.Query.residues(residue));
                 CommonUtils.Selection.SelectionHelper.clearSelectionPrivate(plugin);
                 this.selectedChannelRef = void 0;
+                this.selectedChannelData = void 0;
                 this.selectedBulkResidues = void 0;
                 this.resetScene(plugin);
                 if (this.selectedResidue !== void 0) {
@@ -602,6 +643,12 @@ var CommonUtils;
                     && ((this.selectedResidue.type === "full" && this.residueLightEquals({ type: "light", info: residue }, this.residueToLight(this.selectedResidue)))
                         || (this.selectedResidue.type === "light" && this.residueLightEquals({ type: "light", info: residue }, this.selectedResidue)));
             };
+            SelectionHelper.getSelectedChannelData = function () {
+                return (this.selectedChannelData === void 0) ? null : this.selectedChannelData;
+            };
+            SelectionHelper.getSelectedChannelRef = function () {
+                return (this.selectedChannelRef === void 0) ? "" : this.selectedChannelRef;
+            };
             SelectionHelper.attachClearSelectionToEventHandler = function (plugin) {
                 var _this = this;
                 this.interactionEventStream = LiteMol.Bootstrap.Event.Visual.VisualSelectElement.getStream(plugin.context)
@@ -629,6 +676,8 @@ var CommonUtils;
                     //console.log("double clicked on tunel - deselecting");
                     this.clearSelectionPrivate(plugin);
                     this.selectedChannelRef = void 0;
+                    this.selectedChannelData = void 0;
+                    this.invokeOnChannelDeselectHandlers();
                     return;
                 }
                 else {
@@ -637,7 +686,10 @@ var CommonUtils;
                         deselectTunnelByRef(plugin, this.selectedChannelRef);
                     }
                     this.selectedChannelRef = i.source.ref;
+                    this.selectedChannelData = i.source.props.tag.element.Layers;
                     selectTunnelByRef(plugin, this.selectedChannelRef);
+                    this.clearAltSelection(plugin);
+                    this.invokeOnChannelSelectHandlers(this.selectedChannelData);
                     return;
                 }
                 //console.log("SelectionHelper: SelectEvent from code - ignoring ");
@@ -645,6 +697,7 @@ var CommonUtils;
             return SelectionHelper;
         }());
         SelectionHelper.SELECTION_VISUAL_REF = "res_visual";
+        SelectionHelper.SELECTION_ALT_VISUAL_REF = "alt_res_visual";
         SelectionHelper.interactionEventStream = void 0;
         Selection.SelectionHelper = SelectionHelper;
         function getIndices(v) {
@@ -1048,7 +1101,6 @@ var LayersVizualizer;
     var UI;
     (function (UI) {
         var React = LiteMol.Plugin.React;
-        var Event = LiteMol.Bootstrap.Event;
         var Transformer = LiteMol.Bootstrap.Entity.Transformer;
         var Visualization = LiteMol.Bootstrap.Visualization;
         var Tooltips = CommonUtils.Tooltips;
@@ -1094,31 +1146,24 @@ var LayersVizualizer;
                     colorBoundsMode: this.state.colorBoundsMode
                 });
                 this.vizualizer = vizualizer;
-                var interactionHandler = function showInteraction(type, i, app) {
-                    if (!i || i.source == null || i.source.props.tag === void 0 || i.source.props.tag.type === void 0) {
-                        return;
-                    }
-                    if (i.source.props.tag.type == "Tunnel"
-                        || i.source.props.tag.type == "Path"
-                        || i.source.props.tag.type == "Pore"
-                        || i.source.props.tag.type == "MergedPore") {
-                        window.setTimeout(function () {
-                            app.setState({ currentTunnelRef: i.source.ref, isLayerSelected: false });
-                            Tabs.activateTab("left-tabs", "1");
-                            var layers = DataInterface.convertLayersToLayerData(i.source.props.tag.element.Layers);
-                            Tabs.doAfterTabActivated("left-tabs", "1", function () {
-                                vizualizer.setData(layers);
-                                app.setState({ data: layers, hasData: true, isDOMReady: false, instanceId: vizualizer.getPublicInstanceIdx() });
-                                vizualizer.vizualize();
-                                app.setState({ data: layers, hasData: true, isDOMReady: true, instanceId: vizualizer.getPublicInstanceIdx() });
-                            });
-                        }, 50);
-                        //Testing themes... TODO: remove/move to another location...
-                        //app.applyTheme(app.generateColorTheme(),app.props.controller,app.state.currentTunnelRef);                    
-                    }
-                };
-                this.interactionEventStream = Event.Visual.VisualSelectElement.getStream(this.props.controller.context)
-                    .subscribe(function (e) { return interactionHandler('select', e.data, _this); });
+                CommonUtils.Selection.SelectionHelper.attachOnChannelSelectHandler(function (data) {
+                    window.setTimeout(function () {
+                        _this.setState({ currentTunnelRef: CommonUtils.Selection.SelectionHelper.getSelectedChannelRef(), isLayerSelected: false });
+                        Tabs.activateTab("left-tabs", "1");
+                        var layers = DataInterface.convertLayersToLayerData(data);
+                        Tabs.doAfterTabActivated("left-tabs", "1", function () {
+                            vizualizer.setData(layers);
+                            _this.setState({ data: layers, hasData: true, isDOMReady: false, instanceId: vizualizer.getPublicInstanceIdx() });
+                            vizualizer.rebindDOMRefs();
+                            vizualizer.vizualize();
+                            _this.setState({ data: layers, hasData: true, isDOMReady: true, instanceId: vizualizer.getPublicInstanceIdx() });
+                        });
+                    }, 50);
+                });
+                /*
+                CommonUtils.Selection.SelectionHelper.attachOnChannelDeselectHandler(()=>{
+                    this.setState({data: [], hasData:false, isDOMReady:false, currentTunnelRef: "", isLayerSelected: false});
+                });*/
                 $(window).on("lvContentResize", (function () {
                     _this.forceUpdate();
                 }).bind(this));
@@ -1508,14 +1553,14 @@ var LayersVizualizer;
                 */
                 var residues = this.getLayerResidues(layerIdx);
                 var query = (_a = LiteMol.Core.Structure.Query).residues.apply(_a, residues);
-                CommonUtils.Selection.SelectionHelper.clearSelection(this.props.app.props.controller);
+                CommonUtils.Selection.SelectionHelper.clearAltSelection(this.props.app.props.controller);
                 var t = this.props.app.props.controller.createTransform();
-                t.add('polymer-visual', Transformer.Molecule.CreateSelectionFromQuery, { query: query, name: 'Residues' }, { ref: CommonUtils.Selection.SelectionHelper.getSelectionVisualRef() })
+                t.add('polymer-visual', Transformer.Molecule.CreateSelectionFromQuery, { query: query, name: 'Residues' }, { ref: CommonUtils.Selection.SelectionHelper.getAltSelectionVisualRef() })
                     .then(Transformer.Molecule.CreateVisual, { style: Visualization.Molecule.Default.ForType.get('BallsAndSticks') });
                 this.props.app.props.controller.applyTransform(t)
                     .then(function (res) {
                     //Focus
-                    LiteMol.Bootstrap.Command.Entity.Focus.dispatch(_this.props.app.props.controller.context, _this.props.app.props.controller.context.select(CommonUtils.Selection.SelectionHelper.getSelectionVisualRef()));
+                    LiteMol.Bootstrap.Command.Entity.Focus.dispatch(_this.props.app.props.controller.context, _this.props.app.props.controller.context.select(CommonUtils.Selection.SelectionHelper.getAltSelectionVisualRef()));
                 });
                 var _a;
             };
@@ -1537,7 +1582,7 @@ var LayersVizualizer;
                 var instance = LayersVizualizer.Vizualizer.ACTIVE_INSTANCES[instanceIdx];
                 if (instance.getSelectedLayer() === layerIdx) {
                     this.props.app.state.isLayerSelected = false;
-                    CommonUtils.Selection.SelectionHelper.clearSelection(this.props.app.props.controller);
+                    CommonUtils.Selection.SelectionHelper.clearAltSelection(this.props.app.props.controller);
                     this.resetFocusToTunnel();
                     instance.deselectLayer();
                     instance.highlightHitbox(layerIdx);
@@ -2392,7 +2437,7 @@ var LayersVizualizer;
             }
             var canvas = this.getCanvas();
             var context = this.getContext();
-            if (canvas === void 0 || context === void 0 || !this.isElementVisible(canvas)) {
+            if (canvas === void 0 || context === void 0 || !this.isElementVisible(canvas) || !CommonUtils.Tabs.isActive("left-tabs", "1")) {
                 return;
             }
             var xUnit = canvas.width / 100;
@@ -4129,6 +4174,7 @@ var AglomeredParameters;
                     if (e.data.tree !== void 0 && e.data.ref === "mole-data") {
                         var toShow = [];
                         var data = e.data.props.data;
+                        toShow = toShow.concat(data.Channels.CofactorTunnels);
                         toShow = toShow.concat(data.Channels.ReviewedChannels);
                         toShow = toShow.concat(data.Channels.CSATunnels);
                         toShow = toShow.concat(data.Channels.TransmembranePores);
@@ -4456,7 +4502,6 @@ var LayerProperties;
     var UI;
     (function (UI) {
         var React = LiteMol.Plugin.React;
-        var LiteMoleEvent = LiteMol.Bootstrap.Event;
         var DGComponents = Datagrid.Components;
         var DGTABLE_COLS_COUNT = 2;
         var NO_DATA_MESSAGE = "Hover over channel(2D) for details...";
@@ -4480,26 +4525,17 @@ var LayerProperties;
                 return _this;
             }
             App.prototype.componentDidMount = function () {
-                var _this = this;
-                var interactionHandler = function showInteraction(type, i, app) {
-                    if (!i || i.source == null || i.source.props.tag === void 0 || i.source.props.tag.type === void 0) {
-                        return;
-                    }
-                    if (i.source.props.tag.type == "Tunnel"
-                        || i.source.props.tag.type == "Path"
-                        || i.source.props.tag.type == "Pore"
-                        || i.source.props.tag.type == "MergedPore") {
-                        var layers = i.source.props.tag.element.Layers;
-                        app.setState({ data: layers.LayersInfo });
-                    }
-                };
-                this.interactionEventStream = LiteMoleEvent.Visual.VisualSelectElement.getStream(this.props.controller.context)
-                    .subscribe(function (e) { return interactionHandler('select', e.data, _this); });
                 $(window).on('layerTriggered', this.layerTriggerHandler.bind(this));
             };
             App.prototype.layerTriggerHandler = function (event, layerIdx) {
                 this.layerIdx = layerIdx;
-                this.setState({ layerIdx: layerIdx });
+                var data = CommonUtils.Selection.SelectionHelper.getSelectedChannelData();
+                if (data !== null) {
+                    this.setState({ layerIdx: layerIdx, data: data.LayersInfo });
+                }
+                else {
+                    this.setState({ layerIdx: layerIdx });
+                }
                 setTimeout(function () {
                     $(window).trigger('contentResize');
                 }, 1);
@@ -4627,7 +4663,6 @@ var LayerResidues;
     (function (UI) {
         var DGComponents = Datagrid.Components;
         var React = LiteMol.Plugin.React;
-        var LiteMoleEvent = LiteMol.Bootstrap.Event;
         var DGTABLE_COLS_COUNT = 2;
         var NO_DATA_MESSAGE = "Hover over channel(2D) for details...";
         ;
@@ -4651,21 +4686,6 @@ var LayerResidues;
                 return _this;
             }
             App.prototype.componentDidMount = function () {
-                var _this = this;
-                var interactionHandler = function showInteraction(type, i, app) {
-                    if (!i || i.source == null || i.source.props.tag === void 0 || i.source.props.tag.type === void 0) {
-                        return;
-                    }
-                    if (i.source.props.tag.type == "Tunnel"
-                        || i.source.props.tag.type == "Path"
-                        || i.source.props.tag.type == "Pore"
-                        || i.source.props.tag.type == "MergedPore") {
-                        var layers = i.source.props.tag.element.Layers;
-                        app.setState({ data: layers.LayersInfo });
-                    }
-                };
-                this.interactionEventStream = LiteMoleEvent.Visual.VisualSelectElement.getStream(this.props.controller.context)
-                    .subscribe(function (e) { return interactionHandler('select', e.data, _this); });
                 $(window).on('layerTriggered', this.layerTriggerHandler.bind(this));
             };
             App.prototype.dataWaitHandler = function () {
@@ -4680,7 +4700,13 @@ var LayerResidues;
             };
             App.prototype.layerTriggerHandler = function (event, layerIdx) {
                 this.layerIdx = layerIdx;
-                this.setState({ layerIdx: layerIdx });
+                var data = CommonUtils.Selection.SelectionHelper.getSelectedChannelData();
+                if (data !== null) {
+                    this.setState({ layerIdx: layerIdx, data: data.LayersInfo });
+                }
+                else {
+                    this.setState({ layerIdx: layerIdx });
+                }
                 setTimeout(function () {
                     $(window).trigger('contentResize');
                 }, 1);

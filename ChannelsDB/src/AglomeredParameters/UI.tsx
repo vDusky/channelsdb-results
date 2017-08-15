@@ -37,6 +37,7 @@ namespace AglomeredParameters.UI{
                 if(e.data.tree !== void 0 && e.data.ref === "mole-data"){
                     let toShow:DataInterface.Tunnel[] = [];
                     let data = e.data.props.data as DataInterface.ChannelsDBData;
+                    toShow = toShow.concat(data.Channels.CofactorTunnels);
                     toShow = toShow.concat(data.Channels.ReviewedChannels);
                     toShow = toShow.concat(data.Channels.CSATunnels);
                     toShow = toShow.concat(data.Channels.TransmembranePores);

@@ -30,6 +30,7 @@ namespace CommonUtils.Selection{
 
     export class SelectionHelper{
         private static SELECTION_VISUAL_REF = "res_visual";
+        private static SELECTION_ALT_VISUAL_REF = "alt_res_visual";
 
         private static interactionEventStream: LiteMol.Bootstrap.Rx.IDisposable | undefined = void 0;
 
@@ -37,10 +38,14 @@ namespace CommonUtils.Selection{
         private static selectedChannelRef: string|undefined;
         private static selectedBulkResidues:LightResidueInfo[]|undefined;
 
+        private static selectedChannelData: DataInterface.Layers|undefined;
+
         private static onResidueSelectHandlers:{handler:(residue:LiteMol.Bootstrap.Interactivity.Molecule.ResidueInfo)=>void}[];
         private static onResidueLightSelectHandlers:{handler:(residue:LightResidueInfo)=>void}[];
         private static onResidueBulkSelectHandlers:{handler:(residues:LightResidueInfo[])=>void}[];
         private static onClearSelectionHandlers:{handler:()=>void}[];
+        private static onChannelSelectHandlers:{handler:(data:DataInterface.Layers)=>void}[];
+        private static onChannelDeselectHandlers:{handler:()=>void}[];
 
         public static attachOnResidueSelectHandler(handler:(residue:LiteMol.Bootstrap.Interactivity.Molecule.ResidueInfo)=>void){
             if(this.onResidueSelectHandlers===void 0){
@@ -110,8 +115,46 @@ namespace CommonUtils.Selection{
             }
         }
 
+        public static attachOnChannelSelectHandler(handler:(data:DataInterface.Layers)=>void){
+            if(this.onChannelSelectHandlers===void 0){
+                this.onChannelSelectHandlers = [];
+            }
+
+            this.onChannelSelectHandlers.push({handler});
+        }
+        private static invokeOnChannelSelectHandlers(data: DataInterface.Layers){
+            if(this.onChannelSelectHandlers === void 0){
+                return;
+            }
+
+            for(let h of this.onChannelSelectHandlers){
+                h.handler(data);
+            }
+        }
+
+        public static attachOnChannelDeselectHandler(handler:()=>void){
+            if(this.onChannelDeselectHandlers===void 0){
+                this.onChannelDeselectHandlers = [];
+            }
+
+            this.onChannelDeselectHandlers.push({handler});
+        }
+        private static invokeOnChannelDeselectHandlers(){
+            if(this.onChannelDeselectHandlers === void 0){
+                return;
+            }
+
+            for(let h of this.onChannelDeselectHandlers){
+                h.handler();
+            }
+        }
+
         public static getSelectionVisualRef(){
             return this.SELECTION_VISUAL_REF;
+        }
+
+        public static getAltSelectionVisualRef(){
+            return this.SELECTION_ALT_VISUAL_REF;
         }
 
         public static clearSelection(plugin:LiteMol.Plugin.Controller){
@@ -119,6 +162,7 @@ namespace CommonUtils.Selection{
             this.selectedBulkResidues = void 0;
             this.selectedResidue = void 0;
             this.selectedChannelRef = void 0;
+            this.selectedChannelData = void 0;
             this.resetScene(plugin);
         }
 
@@ -128,7 +172,12 @@ namespace CommonUtils.Selection{
                 deselectTunnelByRef(plugin,this.selectedChannelRef);
             }
             setTimeout(() => LiteMol.Bootstrap.Event.Visual.VisualSelectElement.dispatch(plugin.context, LiteMol.Bootstrap.Interactivity.Info.empty), 0);
+            this.clearAltSelection(plugin);
             this.invokeOnClearSelectionHandlers();
+        }
+
+        public static clearAltSelection(plugin:LiteMol.Plugin.Controller){
+            LiteMol.Bootstrap.Command.Tree.RemoveNode.dispatch(plugin.context, this.SELECTION_ALT_VISUAL_REF);
         }
 
         public static resetScene(plugin:LiteMol.Plugin.Controller){
@@ -201,9 +250,10 @@ namespace CommonUtils.Selection{
         public static selectResiduesBulkWithBallsAndSticks(plugin:LiteMol.Plugin.Controller,residues:LightResidueInfo[]){
             CommonUtils.Selection.SelectionHelper.clearSelectionPrivate(plugin);
             this.selectedChannelRef = void 0;
+            this.selectedChannelData = void 0;
             this.selectedBulkResidues = void 0;
             this.resetScene(plugin);
-
+            
             if(this.selectedBulkResidues!==void 0){
                 if(this.residueBulkEquals(residues,this.selectedBulkResidues)){
                     this.selectedResidue = undefined;
@@ -249,6 +299,7 @@ namespace CommonUtils.Selection{
 
             CommonUtils.Selection.SelectionHelper.clearSelectionPrivate(plugin);
             this.selectedChannelRef = void 0;
+            this.selectedChannelData = void 0;
             this.selectedBulkResidues = void 0;
             this.resetScene(plugin);
 
@@ -311,6 +362,7 @@ namespace CommonUtils.Selection{
             
             CommonUtils.Selection.SelectionHelper.clearSelectionPrivate(plugin);
             this.selectedChannelRef = void 0;
+            this.selectedChannelData = void 0;
             this.selectedBulkResidues = void 0;
             this.resetScene(plugin);
 
@@ -354,6 +406,14 @@ namespace CommonUtils.Selection{
                 );
         }
 
+        public static getSelectedChannelData(){
+            return (this.selectedChannelData===void 0)?null:this.selectedChannelData;
+        }
+
+        public static getSelectedChannelRef(){
+            return (this.selectedChannelRef===void 0)?"":this.selectedChannelRef;
+        }
+
         public static attachClearSelectionToEventHandler(plugin:LiteMol.Plugin.Controller){
             this.interactionEventStream = LiteMol.Bootstrap.Event.Visual.VisualSelectElement.getStream(plugin.context)
                     .subscribe(e => this.interactionHandler('select', e.data as ChannelEventInfo, plugin));
@@ -384,6 +444,8 @@ namespace CommonUtils.Selection{
                 //console.log("double clicked on tunel - deselecting");
                 this.clearSelectionPrivate(plugin);
                 this.selectedChannelRef = void 0;
+                this.selectedChannelData = void 0;
+                this.invokeOnChannelDeselectHandlers();
                 return;
             }
             else{
@@ -392,7 +454,10 @@ namespace CommonUtils.Selection{
                     deselectTunnelByRef(plugin,this.selectedChannelRef);    
                 }
                 this.selectedChannelRef = i.source.ref;
+                this.selectedChannelData = i.source.props.tag.element.Layers;
                 selectTunnelByRef(plugin,this.selectedChannelRef);
+                this.clearAltSelection(plugin);
+                this.invokeOnChannelSelectHandlers(this.selectedChannelData);
                 return;
             }
             
