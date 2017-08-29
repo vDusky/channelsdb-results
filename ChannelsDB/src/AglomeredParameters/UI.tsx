@@ -26,7 +26,7 @@ namespace AglomeredParameters.UI{
 
         private interactionEventStream: LiteMol.Bootstrap.Rx.IDisposable | undefined = void 0;
 
-        state = {
+        state:State = {
             data: null,
             app: this,
             isWaitingForData: false
@@ -41,15 +41,17 @@ namespace AglomeredParameters.UI{
                     toShow = toShow.concat(data.Channels.ReviewedChannels);
                     toShow = toShow.concat(data.Channels.CSATunnels);
                     toShow = toShow.concat(data.Channels.TransmembranePores);
-                    this.setState({
-                        data: toShow
-                    });
+                    let state = this.state;
+                    state.data = toShow;
+                    this.setState(state);
                 }
             });
         }
 
         private dataWaitHandler(){
-            this.setState({isWaitingForData:false});
+            let state = this.state;
+            state.isWaitingForData = false;
+            this.setState(state);
         }
 
         public invokeDataWait(){
@@ -57,7 +59,9 @@ namespace AglomeredParameters.UI{
                 return;
             }
 
-            this.setState({isWaitingForData: true});
+            let state = this.state;
+            state.isWaitingForData = true;
+            this.setState(state);
             Annotation.AnnotationDataProvider.subscribeForData(this.dataWaitHandler.bind(this));
         }
 

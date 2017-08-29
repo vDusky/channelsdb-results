@@ -11159,6 +11159,7 @@ var CIFTools;
         Binary.Writer = Writer;
     })(Binary = CIFTools.Binary || (CIFTools.Binary = {}));
 })(CIFTools || (CIFTools = {}));
+var LiteMolCIFTools = CIFTools;
 "use strict";
 /*
  * Copyright (c) 2016 - now David Sehnal, licensed under Apache 2.0, See LICENSE file for more info.
@@ -11176,7 +11177,7 @@ var LiteMol;
         Core.Promise = LiteMol.Promise;
         var Formats;
         (function (Formats) {
-            Formats.CIF = CIFTools;
+            Formats.CIF = LiteMolCIFTools;
         })(Formats = Core.Formats || (Core.Formats = {}));
     })(Core = LiteMol.Core || (LiteMol.Core = {}));
 })(LiteMol || (LiteMol = {}));
@@ -12797,11 +12798,12 @@ var LiteMol;
                             var pdbx_end_PDB_ins_code = _struct_sheet_range.getColumn('pdbx_end_PDB_ins_code');
                             var symmetry = _struct_sheet_range.getColumn('symmetry');
                             var sheet_id = _struct_sheet_range.getColumn('sheet_id');
+                            var id = _struct_sheet_range.getColumn('id');
                             for (i = 0; i < _struct_sheet_range.rowCount; i++) {
                                 input[input.length] = new Core.Structure.SecondaryStructureElement(3 /* Sheet */, residueIdfromColumns(i, beg_label_asym_id, beg_label_seq_id, pdbx_beg_PDB_ins_code), residueIdfromColumns(i, end_label_asym_id, end_label_seq_id, pdbx_end_PDB_ins_code), {
                                     symmetry: symmetry.getString(i),
                                     sheetId: sheet_id.getString(i),
-                                    id: sheet_id.getString(i)
+                                    id: id.getString(i)
                                 });
                             }
                         }
@@ -31762,6 +31764,7 @@ var CIFTools;
         Binary.Writer = Writer;
     })(Binary = CIFTools.Binary || (CIFTools.Binary = {}));
 })(CIFTools || (CIFTools = {}));
+var LiteMolCIFTools = CIFTools;
 // File:src/Three.js
 
 var LiteMolTHREE = (function () {
@@ -76779,7 +76782,7 @@ var LiteMol;
         Core.Promise = LiteMol.Promise;
         var Formats;
         (function (Formats) {
-            Formats.CIF = CIFTools;
+            Formats.CIF = LiteMolCIFTools;
         })(Formats = Core.Formats || (Core.Formats = {}));
     })(Core = LiteMol.Core || (LiteMol.Core = {}));
 })(LiteMol || (LiteMol = {}));
@@ -78400,11 +78403,12 @@ var LiteMol;
                             var pdbx_end_PDB_ins_code = _struct_sheet_range.getColumn('pdbx_end_PDB_ins_code');
                             var symmetry = _struct_sheet_range.getColumn('symmetry');
                             var sheet_id = _struct_sheet_range.getColumn('sheet_id');
+                            var id = _struct_sheet_range.getColumn('id');
                             for (i = 0; i < _struct_sheet_range.rowCount; i++) {
                                 input[input.length] = new Core.Structure.SecondaryStructureElement(3 /* Sheet */, residueIdfromColumns(i, beg_label_asym_id, beg_label_seq_id, pdbx_beg_PDB_ins_code), residueIdfromColumns(i, end_label_asym_id, end_label_seq_id, pdbx_end_PDB_ins_code), {
                                     symmetry: symmetry.getString(i),
                                     sheetId: sheet_id.getString(i),
-                                    id: sheet_id.getString(i)
+                                    id: id.getString(i)
                                 });
                             }
                         }
@@ -86198,7 +86202,7 @@ var LiteMol;
 (function (LiteMol) {
     var Visualization;
     (function (Visualization) {
-        Visualization.VERSION = { number: "1.7.2", date: "July 1 2017" };
+        Visualization.VERSION = { number: "1.7.3", date: "Aug 26 2017" };
     })(Visualization = LiteMol.Visualization || (LiteMol.Visualization = {}));
 })(LiteMol || (LiteMol = {}));
 var LiteMol;
@@ -87347,11 +87351,11 @@ var LiteMol;
                 this.focusPoint.x = center.x;
                 this.focusPoint.y = center.y;
                 this.focusPoint.z = center.z;
-                this.focusRadius = radius;
+                this.focusRadius = Math.max(radius, 1);
                 this.slabControls.updateRadius(this.focusRadius);
                 this.nearPlaneDelta = 0;
                 this.fogDelta = 0;
-                this.controls.panAndMoveToDistance(this.focusPoint, radius * 4);
+                this.controls.panAndMoveToDistance(this.focusPoint, this.focusRadius * 4);
             };
             Camera.prototype.move = function (target) {
                 this.controls.panTo(target);
@@ -87498,6 +87502,7 @@ var LiteMol;
         Visualization.DefaultSceneOptions = {
             alpha: false,
             clearColor: { r: 0, g: 0, b: 0 },
+            cameraSpeed: 6,
             cameraFOV: 30,
             cameraType: Visualization.CameraType.Perspective,
             enableFog: true
@@ -87646,6 +87651,10 @@ var LiteMol;
                 this.renderer.setClearColor(new Visualization.THREE.Color(cc.r, cc.g, cc.b));
                 this.renderer.setClearAlpha(options.alpha ? 0.0 : 1.0);
                 this.camera.fog.color.setRGB(cc.r, cc.g, cc.b);
+                if (this.camera.controls) {
+                    this.camera.controls.rotateSpeed = options.cameraSpeed;
+                    this.camera.controls.zoomSpeed = options.cameraSpeed;
+                }
                 this.options = options;
                 if (updateCamera)
                     this.camera.createCamera();
@@ -87865,8 +87874,21 @@ var LiteMol;
             Scene.prototype.clear = function () {
                 this.models.clear();
             };
-            Scene.prototype.screenshotAsDataURL = function () {
-                return this.renderer.domElement.toDataURL('image/png');
+            Scene.prototype.downloadScreenshot = function () {
+                var uri = this.renderer.domElement.toDataURL('image/png');
+                var a = document.createElement('a');
+                if ('download' in a) {
+                    a.style.visibility = 'hidden';
+                    a.href = uri;
+                    a.target = '_blank';
+                    a.download = 'litemol_screenshot.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                }
+                else {
+                    window.open(uri, '_blank');
+                }
             };
             Scene.prototype.destroy = function () {
                 //clearInterval(this.updateSizeInterval);
@@ -87920,8 +87942,8 @@ var LiteMol;
                 this.scene = scene;
                 this.enabled = true;
                 //private screen = { left: 0, top: 0, width: 0, height: 0 };
-                this.rotateSpeed = 3.33;
-                this.zoomSpeed = 3.33;
+                this.rotateSpeed = 6;
+                this.zoomSpeed = 6;
                 this.panSpeed = 1.0;
                 this.noRotate = false;
                 this.noZoom = false;
@@ -87931,7 +87953,7 @@ var LiteMol;
                 this.dynamicDampingFactor = 0.2;
                 this.minDistance = 1.5;
                 this.maxDistance = 100000;
-                this.keys = [65 /*A*/, 83 /*S*/, 68 /*D*/];
+                this.keys = [65 /*A*/, 16 /*S*/, 17 /*D*/];
                 this.target = new Visualization.THREE.Vector3();
                 // internals
                 this.EPS = 0.000001;
@@ -91958,7 +91980,7 @@ var LiteMol;
             var LA = LiteMol.Core.Geometry.LinearAlgebra;
             function createSphereSurface(sphere) {
                 var _a = sphere.tessalation, tessalation = _a === void 0 ? 0 : _a;
-                var geom = new Visualization.THREE.IcosahedronGeometry(1, tessalation);
+                var geom = new Visualization.THREE.IcosahedronGeometry(1.0, tessalation);
                 var surf = Visualization.GeometryHelper.toSurface(geom);
                 geom.dispose();
                 return surf;
@@ -98865,7 +98887,6 @@ var LiteMol;
     (function (Plugin) {
         "use strict";
         Plugin.React = __LiteMolReact;
-        //declare var __LiteMolReactDOM: typeof __LiteMolReact.__DOM;
         Plugin.ReactDOM = __LiteMolReactDOM;
         var Controls;
         (function (Controls) {
@@ -101430,6 +101451,7 @@ var LiteMol;
                             options = Plugin.React.createElement("div", { className: 'lm-viewport-controls-scene-options lm-control' },
                                 Plugin.React.createElement(Plugin.Controls.Toggle, { onChange: function (v) { return _this.controller.setState({ enableFog: v }); }, value: state.enableFog, label: 'Fog' }),
                                 Plugin.React.createElement(Plugin.Controls.Slider, { label: 'FOV', min: 30, max: 90, onChange: function (v) { return _this.controller.setState({ cameraFOV: v }); }, value: state.cameraFOV }),
+                                Plugin.React.createElement(Plugin.Controls.Slider, { label: 'Camera Speed', min: 1, max: 10, step: 0.01, onChange: function (v) { return _this.controller.setState({ cameraSpeed: v }); }, value: state.cameraSpeed }),
                                 Plugin.React.createElement(Plugin.Controls.ToggleColorPicker, { color: state.clearColor, label: 'Background', position: 'below', onChange: function (c) { return _this.controller.setState({ clearColor: c }); } }));
                         }
                         else if (this.state.showHelp) {
@@ -101440,7 +101462,7 @@ var LiteMol;
                             Plugin.React.createElement("div", { className: 'lm-viewport-controls-buttons' },
                                 Plugin.React.createElement(Plugin.Controls.Button, { style: 'link', active: this.state.showHelp, customClass: 'lm-btn-link-toggle-' + (this.state.showHelp ? 'on' : 'off'), icon: 'help-circle', onClick: function (e) { return _this.setState({ showHelp: !_this.state.showHelp, showSceneOptions: false }); }, title: 'Controls Help' }),
                                 Plugin.React.createElement(Plugin.Controls.Button, { style: 'link', active: this.state.showSceneOptions, customClass: 'lm-btn-link-toggle-' + (this.state.showSceneOptions ? 'on' : 'off'), icon: 'settings', onClick: function (e) { return _this.setState({ showSceneOptions: !_this.state.showSceneOptions, showHelp: false }); }, title: 'Scene Options' }),
-                                Plugin.React.createElement(Plugin.Controls.Button, { style: 'link', icon: 'screenshot', onClick: function (e) { window.open(_this.controller.scene.scene.screenshotAsDataURL(), '_blank'); }, title: 'Screenshot' }),
+                                Plugin.React.createElement(Plugin.Controls.Button, { style: 'link', icon: 'screenshot', onClick: function (e) { return _this.controller.scene.scene.downloadScreenshot(); }, title: 'Screenshot' }),
                                 Plugin.React.createElement(Plugin.Controls.Button, { onClick: function () { layoutController.update({ hideControls: controlsShown }); _this.forceUpdate(); }, icon: 'tools', title: controlsShown ? 'Hide Controls' : 'Show Controls', active: controlsShown, customClass: 'lm-btn-link-toggle-' + (controlsShown ? 'on' : 'off'), style: 'link' }),
                                 Plugin.React.createElement(Plugin.Controls.Button, { onClick: function () { return layoutController.update({ isExpanded: !layoutState.isExpanded }); }, icon: 'expand-layout', title: layoutState.isExpanded ? 'Collapse' : 'Expand', active: layoutState.isExpanded, customClass: 'lm-btn-link-toggle-' + (layoutState.isExpanded ? 'on' : 'off'), style: 'link' }),
                                 Plugin.React.createElement(Plugin.Controls.Button, { style: 'link', icon: 'reset-scene', onClick: function (e) { return LiteMol.Bootstrap.Command.Visual.ResetScene.dispatch(_this.controller.context, void 0); }, title: 'Reset scene' })),

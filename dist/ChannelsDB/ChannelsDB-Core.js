@@ -1137,26 +1137,39 @@ var LayersVizualizer;
                 var _this = this;
                 var vizualizer = this.props.vizualizer;
                 vizualizer.setColorBoundsMode(this.state.colorBoundsMode);
-                this.setState({
-                    instanceId: vizualizer.getPublicInstanceIdx(),
-                    customColoringPropertyKey: vizualizer.getCustomColoringPropertyKey(),
-                    coloringPropertyKey: vizualizer.getColoringPropertyKey(),
-                    customRadiusPropertyKey: vizualizer.getCustomRadiusPropertyKey(),
-                    radiusPropertyKey: vizualizer.getRadiusPropertyKey(),
-                    colorBoundsMode: this.state.colorBoundsMode
-                });
+                var state = this.state;
+                state.instanceId = vizualizer.getPublicInstanceIdx();
+                state.customColoringPropertyKey = vizualizer.getCustomColoringPropertyKey();
+                state.coloringPropertyKey = vizualizer.getColoringPropertyKey();
+                state.customRadiusPropertyKey = vizualizer.getCustomRadiusPropertyKey();
+                state.radiusPropertyKey = vizualizer.getRadiusPropertyKey();
+                state.colorBoundsMode = this.state.colorBoundsMode;
+                this.setState(state);
                 this.vizualizer = vizualizer;
                 CommonUtils.Selection.SelectionHelper.attachOnChannelSelectHandler(function (data) {
                     window.setTimeout(function () {
-                        _this.setState({ currentTunnelRef: CommonUtils.Selection.SelectionHelper.getSelectedChannelRef(), isLayerSelected: false });
+                        var s1 = _this.state;
+                        s1.currentTunnelRef = CommonUtils.Selection.SelectionHelper.getSelectedChannelRef();
+                        s1.isLayerSelected = false;
+                        _this.setState(s1);
                         Tabs.activateTab("left-tabs", "1");
                         var layers = DataInterface.convertLayersToLayerData(data);
                         Tabs.doAfterTabActivated("left-tabs", "1", function () {
                             vizualizer.setData(layers);
-                            _this.setState({ data: layers, hasData: true, isDOMReady: false, instanceId: vizualizer.getPublicInstanceIdx() });
+                            var s2 = _this.state;
+                            s2.data = layers;
+                            s2.hasData = true;
+                            s2.isDOMReady = false;
+                            s2.instanceId = vizualizer.getPublicInstanceIdx();
+                            _this.setState(s2);
                             vizualizer.rebindDOMRefs();
                             vizualizer.vizualize();
-                            _this.setState({ data: layers, hasData: true, isDOMReady: true, instanceId: vizualizer.getPublicInstanceIdx() });
+                            var s3 = _this.state;
+                            s3.data = layers;
+                            s3.hasData = true;
+                            s3.isDOMReady = true;
+                            s3.instanceId = vizualizer.getPublicInstanceIdx();
+                            _this.setState(s3);
                         });
                     }, 50);
                 });
@@ -1234,11 +1247,14 @@ var LayersVizualizer;
                     instance.setColoringPropertyKey(propertyName);
                 }
                 instance.vizualize();
+                var state = this.props.app.state;
                 if (this.props.isCustom) {
-                    this.props.app.setState({ customColoringPropertyKey: propertyName });
+                    state.customColoringPropertyKey = propertyName;
+                    this.props.app.setState(state);
                 }
                 else {
-                    this.props.app.setState({ coloringPropertyKey: propertyName });
+                    state.coloringPropertyKey = propertyName;
+                    this.props.app.setState(state);
                 }
             };
             ColorMenuItem.prototype.render = function () {
@@ -1273,11 +1289,14 @@ var LayersVizualizer;
                     instance.setRadiusPropertyKey(propertyName);
                 }
                 instance.vizualize();
+                var state = this.props.app.state;
                 if (this.props.isCustom) {
-                    this.props.app.setState({ customRadiusPropertyKey: propertyName });
+                    state.customRadiusPropertyKey = propertyName;
+                    this.props.app.setState(state);
                 }
                 else {
-                    this.props.app.setState({ radiusPropertyKey: propertyName });
+                    state.radiusPropertyKey = propertyName;
+                    this.props.app.setState(state);
                 }
             };
             RadiusMenuItem.prototype.render = function () {
@@ -1307,7 +1326,9 @@ var LayersVizualizer;
                 }
                 instance.setColorBoundsMode(mode);
                 instance.vizualize();
-                this.props.app.setState({ colorBoundsMode: mode });
+                var state = this.props.app.state;
+                state.colorBoundsMode = mode;
+                this.props.app.setState(state);
             };
             ColorBoundsMenuItem.prototype.render = function () {
                 return (React.createElement("li", null,
@@ -1571,7 +1592,9 @@ var LayersVizualizer;
                 var instance = LayersVizualizer.Vizualizer.ACTIVE_INSTANCES[instanceIdx];
                 instance.highlightHitbox(layerIdx);
                 if (!this.props.app.state.isLayerSelected) {
-                    this.props.app.setState({ layerId: layerIdx });
+                    var state = this.props.app.state;
+                    state.layerId = layerIdx;
+                    this.props.app.setState(state);
                     $(window).trigger('layerTriggered', layerIdx);
                 }
             };
@@ -1588,7 +1611,10 @@ var LayersVizualizer;
                     instance.highlightHitbox(layerIdx);
                 }
                 else {
-                    this.props.app.setState({ layerId: layerIdx, isLayerSelected: true });
+                    var state = this.props.app.state;
+                    state.layerId = layerIdx;
+                    state.isLayerSelected = true;
+                    this.props.app.setState(state);
                     this.showLayerResidues3DAndFocus(layerIdx);
                     instance.deselectLayer();
                     instance.selectLayer(layerIdx);
@@ -4178,20 +4204,24 @@ var AglomeredParameters;
                         toShow = toShow.concat(data.Channels.ReviewedChannels);
                         toShow = toShow.concat(data.Channels.CSATunnels);
                         toShow = toShow.concat(data.Channels.TransmembranePores);
-                        _this.setState({
-                            data: toShow
-                        });
+                        var state = _this.state;
+                        state.data = toShow;
+                        _this.setState(state);
                     }
                 });
             };
             App.prototype.dataWaitHandler = function () {
-                this.setState({ isWaitingForData: false });
+                var state = this.state;
+                state.isWaitingForData = false;
+                this.setState(state);
             };
             App.prototype.invokeDataWait = function () {
                 if (this.state.isWaitingForData) {
                     return;
                 }
-                this.setState({ isWaitingForData: true });
+                var state = this.state;
+                state.isWaitingForData = true;
+                this.setState(state);
                 Annotation.AnnotationDataProvider.subscribeForData(this.dataWaitHandler.bind(this));
             };
             App.prototype.componentWillUnmount = function () {
@@ -4368,20 +4398,24 @@ var ChannelsDescriptions;
                         toShow = toShow.concat(data.Channels.ReviewedChannels);
                         toShow = toShow.concat(data.Channels.CSATunnels);
                         toShow = toShow.concat(data.Channels.TransmembranePores);
-                        _this.setState({
-                            data: toShow
-                        });
+                        var state = _this.state;
+                        state.data = toShow;
+                        _this.setState(state);
                     }
                 });
             };
             App.prototype.dataWaitHandler = function () {
-                this.setState({ isWaitingForData: false });
+                var state = this.state;
+                state.isWaitingForData = false;
+                this.setState(state);
             };
             App.prototype.invokeDataWait = function () {
                 if (this.state.isWaitingForData) {
                     return;
                 }
-                this.setState({ isWaitingForData: true });
+                var state = this.state;
+                state.isWaitingForData = true;
+                this.setState(state);
                 Annotation.AnnotationDataProvider.subscribeForData(this.dataWaitHandler.bind(this));
             };
             App.prototype.componentWillUnmount = function () {
@@ -4531,11 +4565,15 @@ var LayerProperties;
             App.prototype.layerTriggerHandler = function (event, layerIdx) {
                 this.layerIdx = layerIdx;
                 var data = CommonUtils.Selection.SelectionHelper.getSelectedChannelData();
+                var state = this.state;
                 if (data !== null) {
-                    this.setState({ layerIdx: layerIdx, data: data.LayersInfo });
+                    state.layerIdx = layerIdx;
+                    state.data = data.LayersInfo;
+                    this.setState(state);
                 }
                 else {
-                    this.setState({ layerIdx: layerIdx });
+                    state.layerIdx = layerIdx;
+                    this.setState(state);
                 }
                 setTimeout(function () {
                     $(window).trigger('contentResize');
@@ -4690,23 +4728,31 @@ var LayerResidues;
                 $(window).on('layerTriggered', this.layerTriggerHandler.bind(this));
             };
             App.prototype.dataWaitHandler = function () {
-                this.setState({ isWaitingForData: false });
+                var state = this.state;
+                state.isWaitingForData = false;
+                this.setState(state);
             };
             App.prototype.invokeDataWait = function () {
                 if (this.state.isWaitingForData) {
                     return;
                 }
-                this.setState({ isWaitingForData: true });
+                var state = this.state;
+                state.isWaitingForData = true;
+                this.setState(state);
                 Annotation.AnnotationDataProvider.subscribeForData(this.dataWaitHandler.bind(this));
             };
             App.prototype.layerTriggerHandler = function (event, layerIdx) {
                 this.layerIdx = layerIdx;
                 var data = CommonUtils.Selection.SelectionHelper.getSelectedChannelData();
+                var state = this.state;
                 if (data !== null) {
-                    this.setState({ layerIdx: layerIdx, data: data.LayersInfo });
+                    state.layerIdx = layerIdx;
+                    state.data = data.LayersInfo;
+                    this.setState(state);
                 }
                 else {
-                    this.setState({ layerIdx: layerIdx });
+                    state.layerIdx = layerIdx;
+                    this.setState(state);
                 }
                 setTimeout(function () {
                     $(window).trigger('contentResize');
@@ -4924,7 +4970,9 @@ var ResidueAnnotations;
                 var _this = this;
                 var list = Annotation.AnnotationDataProvider.getResidueList();
                 if (list !== void 0) {
-                    this.setState({ data: this.sortResidues(list) });
+                    var state = this.state;
+                    state.data = this.sortResidues(list);
+                    this.setState(state);
                 }
                 else {
                     Annotation.AnnotationDataProvider.subscribeForData((function () {
@@ -4932,7 +4980,9 @@ var ResidueAnnotations;
                         if (list === void 0) {
                             return;
                         }
-                        _this.setState({ data: _this.sortResidues(list, true) });
+                        var s = _this.state;
+                        s.data = _this.sortResidues(list, true);
+                        _this.setState(s);
                         setTimeout(function () {
                             $(window).trigger('contentResize');
                         }, 1);
@@ -4940,13 +4990,17 @@ var ResidueAnnotations;
                 }
             };
             App.prototype.dataWaitHandler = function () {
-                this.setState({ isWaitingForData: false });
+                var state = this.state;
+                state.isWaitingForData = false;
+                this.setState(state);
             };
             App.prototype.invokeDataWait = function () {
                 if (this.state.isWaitingForData) {
                     return;
                 }
-                this.setState({ isWaitingForData: true });
+                var state = this.state;
+                state.isWaitingForData = true;
+                this.setState(state);
                 Annotation.AnnotationDataProvider.subscribeForData(this.dataWaitHandler.bind(this));
             };
             App.prototype.selectResiude = function (residueId) {
@@ -5129,7 +5183,9 @@ var ProteinAnnotations;
             App.prototype.handleData = function () {
                 var annotations = Annotation.AnnotationDataProvider.getProteinAnnotations();
                 if (annotations !== void 0) {
-                    this.setState({ data: annotations });
+                    var state = this.state;
+                    state.data = annotations;
+                    this.setState(state);
                     setTimeout(function () {
                         $(window).trigger('contentResize');
                     }, 1);
@@ -5304,20 +5360,26 @@ var LiningResidues;
                     if (data === null) {
                         return;
                     }
-                    _this.setState({ data: CommonUtils.Residues.sort(data.ResidueFlow, void 0, true, true) });
+                    var state = _this.state;
+                    state.data = CommonUtils.Residues.sort(data.ResidueFlow, void 0, true, true);
+                    _this.setState(state);
                     setTimeout(function () {
                         $(window).trigger('contentResize');
                     }, 1);
                 });
             };
             App.prototype.dataWaitHandler = function () {
-                this.setState({ isWaitingForData: false });
+                var state = this.state;
+                state.isWaitingForData = false;
+                this.setState(state);
             };
             App.prototype.invokeDataWait = function () {
                 if (this.state.isWaitingForData) {
                     return;
                 }
-                this.setState({ isWaitingForData: true });
+                var state = this.state;
+                state.isWaitingForData = true;
+                this.setState(state);
                 Annotation.AnnotationDataProvider.subscribeForData(this.dataWaitHandler.bind(this));
             };
             App.prototype.componentWillUnmount = function () {
@@ -6803,13 +6865,17 @@ var LiteMol;
                         }).bind(this));
                     };
                     Channel.prototype.dataWaitHandler = function () {
-                        this.setState({ isWaitingForData: false });
+                        var state = this.state;
+                        state.isWaitingForData = false;
+                        this.setState(state);
                     };
                     Channel.prototype.invokeDataWait = function () {
                         if (this.state.isWaitingForData) {
                             return;
                         }
-                        this.setState({ isWaitingForData: true });
+                        var state = this.state;
+                        state.isWaitingForData = true;
+                        this.setState(state);
                         Annotation.AnnotationDataProvider.subscribeForData(this.dataWaitHandler.bind(this));
                     };
                     Channel.prototype.render = function () {
@@ -6840,7 +6906,9 @@ var LiteMol;
                         var entity = this.props.state.plugin.context.select(this.props.channel.__id)[0];
                         if (entity === void 0 || entity.ref === "undefined") {
                             Channels_1.State.showChannelVisuals(this.props.state.plugin, [this.props.channel], true);
-                            this.setState({ isVisible: true });
+                            var state = this.state;
+                            state.isVisible = true;
+                            this.setState(state);
                             window.setTimeout((function () {
                                 _this.selectChannel();
                             }).bind(this), 50);

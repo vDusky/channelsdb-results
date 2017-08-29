@@ -39,7 +39,7 @@ namespace ResidueAnnotations.UI{
 
     export class App extends React.Component<{controller: LiteMol.Plugin.Controller }, State> {
 
-        state = {
+        state:State = {
             data: null,
             app: this,
             isWaitingForData: false
@@ -109,14 +109,18 @@ namespace ResidueAnnotations.UI{
         componentDidMount() {
             let list = Annotation.AnnotationDataProvider.getResidueList();
             if(list !== void 0){
-                this.setState({data:this.sortResidues(list)});
+                let state = this.state;
+                state.data = this.sortResidues(list);
+                this.setState(state);
             }else{
                 Annotation.AnnotationDataProvider.subscribeForData((()=>{
                     let list = Annotation.AnnotationDataProvider.getResidueList();
                     if(list === void 0){
                         return;
                     }
-                    this.setState({data:this.sortResidues(list, true)});
+                    let s = this.state;
+                    s.data = this.sortResidues(list, true);
+                    this.setState(s);
                     setTimeout(function(){
                         $( window ).trigger('contentResize');
                     },1);
@@ -125,7 +129,9 @@ namespace ResidueAnnotations.UI{
         }
 
         private dataWaitHandler(){
-            this.setState({isWaitingForData:false});
+            let state = this.state;
+            state.isWaitingForData = false;
+            this.setState(state);
         }
 
         public invokeDataWait(){
@@ -133,7 +139,9 @@ namespace ResidueAnnotations.UI{
                 return;
             }
 
-            this.setState({isWaitingForData: true});
+            let state = this.state;
+            state.isWaitingForData = true;
+            this.setState(state);
             Annotation.AnnotationDataProvider.subscribeForData(this.dataWaitHandler.bind(this));
         }
 

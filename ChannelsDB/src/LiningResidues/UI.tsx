@@ -53,7 +53,9 @@ namespace LiningResidues.UI{
                     return;
                 }
 
-                this.setState({data:CommonUtils.Residues.sort(data.ResidueFlow,void 0, true, true)});
+                let state = this.state;
+                state.data = CommonUtils.Residues.sort(data.ResidueFlow,void 0, true, true);
+                this.setState(state);
 
                 setTimeout(function(){
                     $( window ).trigger('contentResize');
@@ -62,7 +64,9 @@ namespace LiningResidues.UI{
         }
 
         private dataWaitHandler(){
-            this.setState({isWaitingForData:false});
+            let state = this.state;
+            state.isWaitingForData = false;
+            this.setState(state);
         }
 
         public invokeDataWait(){
@@ -70,7 +74,9 @@ namespace LiningResidues.UI{
                 return;
             }
 
-            this.setState({isWaitingForData: true});
+            let state = this.state;
+            state.isWaitingForData = true;
+            this.setState(state);
             Annotation.AnnotationDataProvider.subscribeForData(this.dataWaitHandler.bind(this));
         }
 

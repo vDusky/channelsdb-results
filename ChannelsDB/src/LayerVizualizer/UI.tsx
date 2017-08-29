@@ -62,27 +62,40 @@ namespace LayersVizualizer.UI{
 
             vizualizer.setColorBoundsMode(this.state.colorBoundsMode);
 
-            this.setState({
-                instanceId: vizualizer.getPublicInstanceIdx(),
-                customColoringPropertyKey:vizualizer.getCustomColoringPropertyKey(),
-                coloringPropertyKey:vizualizer.getColoringPropertyKey(),
-                customRadiusPropertyKey:vizualizer.getCustomRadiusPropertyKey(),
-                radiusPropertyKey:vizualizer.getRadiusPropertyKey(),
-                colorBoundsMode:this.state.colorBoundsMode
-            });
+            let state = this.state;
+            state.instanceId= vizualizer.getPublicInstanceIdx();
+            state.customColoringPropertyKey=vizualizer.getCustomColoringPropertyKey();
+            state.coloringPropertyKey=vizualizer.getColoringPropertyKey();
+            state.customRadiusPropertyKey=vizualizer.getCustomRadiusPropertyKey();
+            state.radiusPropertyKey=vizualizer.getRadiusPropertyKey();
+            state.colorBoundsMode=this.state.colorBoundsMode;
+            this.setState(state);
             this.vizualizer = vizualizer;
 
             CommonUtils.Selection.SelectionHelper.attachOnChannelSelectHandler((data)=>{
                 window.setTimeout(()=>{
-                    this.setState({currentTunnelRef: CommonUtils.Selection.SelectionHelper.getSelectedChannelRef(), isLayerSelected: false});
+                    let s1 = this.state;
+                    s1.currentTunnelRef= CommonUtils.Selection.SelectionHelper.getSelectedChannelRef();
+                    s1.isLayerSelected= false;
+                    this.setState(s1);
                     Tabs.activateTab("left-tabs","1");
                     let layers = DataInterface.convertLayersToLayerData(data);
                     Tabs.doAfterTabActivated("left-tabs","1",()=>{
                         vizualizer.setData(layers);
-                        this.setState({data: layers, hasData: true, isDOMReady:false, instanceId: vizualizer.getPublicInstanceIdx()});
+                        let s2 = this.state;
+                        s2.data= layers;
+                        s2.hasData= true;
+                        s2.isDOMReady=false;
+                        s2.instanceId= vizualizer.getPublicInstanceIdx();
+                        this.setState(s2);
                         vizualizer.rebindDOMRefs();
                         vizualizer.vizualize();  
-                        this.setState({data: layers, hasData: true, isDOMReady:true, instanceId: vizualizer.getPublicInstanceIdx()});
+                        let s3 = this.state;
+                        s3.data= layers;
+                        s3.hasData= true;
+                        s3.isDOMReady=true;
+                        s3.instanceId= vizualizer.getPublicInstanceIdx();
+                        this.setState(s3);
                     });
                 },50);
             });
@@ -181,11 +194,14 @@ namespace LayersVizualizer.UI{
 
             instance.vizualize();
             
+            let state = this.props.app.state;
             if(this.props.isCustom){
-                this.props.app.setState({customColoringPropertyKey:propertyName});
+                state.customColoringPropertyKey=propertyName;
+                this.props.app.setState(state);
             }
             else{
-                this.props.app.setState({coloringPropertyKey:propertyName});
+                state.coloringPropertyKey=propertyName;
+                this.props.app.setState(state);
             }
         }
 
@@ -223,11 +239,14 @@ namespace LayersVizualizer.UI{
 
             instance.vizualize();
             
+            let state = this.props.app.state;
             if(this.props.isCustom){
-                this.props.app.setState({customRadiusPropertyKey:propertyName});
+                state.customRadiusPropertyKey=propertyName;
+                this.props.app.setState(state);
             }
             else{
-                this.props.app.setState({radiusPropertyKey:propertyName});
+                state.radiusPropertyKey=propertyName;
+                this.props.app.setState(state);
             }
         }
 
@@ -259,7 +278,9 @@ namespace LayersVizualizer.UI{
             instance.setColorBoundsMode(mode);
             instance.vizualize();
             
-            this.props.app.setState({colorBoundsMode:mode});
+            let state = this.props.app.state;
+            state.colorBoundsMode=mode;
+            this.props.app.setState(state);
         }
 
         render(){
@@ -546,7 +567,9 @@ namespace LayersVizualizer.UI{
             
             instance.highlightHitbox(layerIdx);
             if(!this.props.app.state.isLayerSelected){
-                this.props.app.setState({layerId: layerIdx});    
+                let state = this.props.app.state;
+                state.layerId= layerIdx;
+                this.props.app.setState(state);    
                 $( window ).trigger('layerTriggered',layerIdx);
             }      
         }
@@ -565,7 +588,10 @@ namespace LayersVizualizer.UI{
                 instance.highlightHitbox(layerIdx);
             }
             else{
-                this.props.app.setState({layerId: layerIdx,isLayerSelected: true});   
+                let state = this.props.app.state;
+                state.layerId = layerIdx;
+                state.isLayerSelected = true;
+                this.props.app.setState(state);   
                 this.showLayerResidues3DAndFocus(layerIdx);
                 instance.deselectLayer();
                 instance.selectLayer(layerIdx);

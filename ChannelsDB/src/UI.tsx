@@ -351,7 +351,9 @@ namespace LiteMol.Example.Channels.UI {
         }
 
         private dataWaitHandler(){
-            this.setState({isWaitingForData:false});
+            let state = this.state;
+            state.isWaitingForData = false;
+            this.setState(state);
         }
 
         public invokeDataWait(){
@@ -359,7 +361,9 @@ namespace LiteMol.Example.Channels.UI {
                 return;
             }
 
-            this.setState({isWaitingForData: true});
+            let state = this.state;
+            state.isWaitingForData = true;
+            this.setState(state);
             Annotation.AnnotationDataProvider.subscribeForData(this.dataWaitHandler.bind(this));
         }
 
@@ -385,7 +389,9 @@ namespace LiteMol.Example.Channels.UI {
             let entity = this.props.state.plugin.context.select(this.props.channel.__id)[0];
             if(entity === void 0 || entity.ref === "undefined"){
                 State.showChannelVisuals(this.props.state.plugin,[this.props.channel],true);
-                this.setState({isVisible:true});
+                let state = this.state;
+                state.isVisible = true;
+                this.setState(state);
                 window.setTimeout((()=>{
                     this.selectChannel();
                 }).bind(this),50);

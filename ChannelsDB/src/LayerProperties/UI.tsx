@@ -39,7 +39,7 @@ namespace LayerProperties.UI{
 
         private interactionEventStream: LiteMol.Bootstrap.Rx.IDisposable | undefined = void 0;
 
-        state = {
+        state:State = {
             data: null,
             app: this,
             layerIdx: -1
@@ -57,11 +57,15 @@ namespace LayerProperties.UI{
 
             let data = CommonUtils.Selection.SelectionHelper.getSelectedChannelData();
 
+            let state = this.state;
             if(data!==null){
-                this.setState({layerIdx, data: data.LayersInfo});
+                state.layerIdx = layerIdx;
+                state.data = data.LayersInfo
+                this.setState(state);
             }
             else{
-                this.setState({layerIdx});
+                state.layerIdx = layerIdx;
+                this.setState(state);
             }
 
             setTimeout(function(){
