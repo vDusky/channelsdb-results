@@ -398,7 +398,34 @@ namespace LayersVizualizer.UI{
     }
 
     class ExportTypeButton extends React.Component<{instanceId:number,exportType:string},{}>{
-        
+        private dataURItoBlob(dataURI:string):Blob{
+            // convert base64 to raw binary data held in a string
+            // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+            var byteString = atob(dataURI.split(',')[1]);
+            // separate out the mime component
+            var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+            // write the bytes of the string to an ArrayBuffer
+            var ab = new ArrayBuffer(byteString.length);
+            var dw = new DataView(ab);
+            for(var i = 0; i < byteString.length; i++) {
+                dw.setUint8(i, byteString.charCodeAt(i));
+            }
+            // write the ArrayBuffer to a blob, and you're done
+            return new Blob([ab], {type: mimeString});
+        }
+
+        private triggerDownload(dataUrl:string, fileName:string){
+            let a = document.createElement("a");
+            document.body.appendChild(a);
+            $(a).css("display","none");
+            let blob = this.dataURItoBlob(dataUrl)
+            let url = window.URL.createObjectURL(blob);
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
         private export(e: React.MouseEvent<HTMLAreaElement>){
             let targetElement = (e.target as HTMLElement);
             let instanceIdx = Number(targetElement.getAttribute("data-instanceidx")).valueOf();
@@ -425,8 +452,7 @@ namespace LayersVizualizer.UI{
                     throw new Error(`Unsupported export type '${exportType}'`);
             }
 
-            var win = window.open(imgDataUrl, '_blank');
-            win.focus();
+            this.triggerDownload(imgDataUrl,`export-2D.${exportType.toLowerCase()}`);
         }
 
         render(){

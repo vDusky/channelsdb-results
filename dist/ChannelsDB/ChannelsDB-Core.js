@@ -1446,6 +1446,32 @@ var LayersVizualizer;
             function ExportTypeButton() {
                 return _super !== null && _super.apply(this, arguments) || this;
             }
+            ExportTypeButton.prototype.dataURItoBlob = function (dataURI) {
+                // convert base64 to raw binary data held in a string
+                // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+                var byteString = atob(dataURI.split(',')[1]);
+                // separate out the mime component
+                var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+                // write the bytes of the string to an ArrayBuffer
+                var ab = new ArrayBuffer(byteString.length);
+                var dw = new DataView(ab);
+                for (var i = 0; i < byteString.length; i++) {
+                    dw.setUint8(i, byteString.charCodeAt(i));
+                }
+                // write the ArrayBuffer to a blob, and you're done
+                return new Blob([ab], { type: mimeString });
+            };
+            ExportTypeButton.prototype.triggerDownload = function (dataUrl, fileName) {
+                var a = document.createElement("a");
+                document.body.appendChild(a);
+                $(a).css("display", "none");
+                var blob = this.dataURItoBlob(dataUrl);
+                var url = window.URL.createObjectURL(blob);
+                a.href = url;
+                a.download = fileName;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            };
             ExportTypeButton.prototype.export = function (e) {
                 var targetElement = e.target;
                 var instanceIdx = Number(targetElement.getAttribute("data-instanceidx")).valueOf();
@@ -1468,8 +1494,7 @@ var LayersVizualizer;
                     default:
                         throw new Error("Unsupported export type '" + exportType + "'");
                 }
-                var win = window.open(imgDataUrl, '_blank');
-                win.focus();
+                this.triggerDownload(imgDataUrl, "export-2D." + exportType.toLowerCase());
             };
             ExportTypeButton.prototype.render = function () {
                 return React.createElement("li", null,
