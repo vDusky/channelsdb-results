@@ -16,7 +16,7 @@ namespace LiteMol.Example.Channels {
             "local":{defaultContextPath: "/ChannelsDB", defaultPid:"5an8", useParameterAsPid:true},
             "chdb-test":{defaultContextPath: "/ChannelsDB/detail", defaultPid:"5an8", useLastPathPartAsPid:true},
             "test":{defaultContextPath: "/test/detail", defaultPid:"5an8", useLastPathPartAsPid:true},
-            "chdb-prod":{defaultContextPath: "/ChannelsDB/detail", defaultPid:"137l", useLastPathPartAsPid:true},//7tmt
+            "chdb-prod":{defaultContextPath: "/ChannelsDB/detail", defaultPid:"137l", useLastPathPartAsPid:true},//7tmt, 137l
         };
         const ROUTING_MODE = "chdb-prod";
         
