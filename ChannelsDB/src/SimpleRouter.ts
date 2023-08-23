@@ -199,6 +199,7 @@ namespace SimpleRouter{
             this.defaultPid=routingParameters.defaultPid;
             this.useParameterAsPid=(routingParameters.useParameterAsPid===void 0)?false:routingParameters.useParameterAsPid;
             this.useLastPathPartAsPid=(routingParameters.useLastPathPartAsPid===void 0)?false:routingParameters.useLastPathPartAsPid;
+            this.defaultDB=routingParameters.defaultDB;
 
             this.router = new Router(routingParameters.defaultContextPath);
 
