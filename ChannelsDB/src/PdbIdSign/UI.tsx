@@ -16,9 +16,10 @@ namespace PdbIdSign.UI{
         }
 
         render() {
-            let pdbid = SimpleRouter.GlobalRouter.getCurrentPid();
+            let pid = SimpleRouter.GlobalRouter.getCurrentPid();
+            let subDB = SimpleRouter.GlobalRouter.getCurrentDB();
             return <div>
-                <a href={`https://pdbe.org/${pdbid}`} target="_blank">{pdbid} <span className="glyphicon glyphicon-new-window href-ico"></span></a>
+                <a href={subDB === "pdb" ? `https://pdbe.org/${pid}` : `https://alphafill.eu/model?id=${pid}`} style={subDB === "pdb" ? {} : {fontSize: "14"}} target="_blank">{pid} <span className="glyphicon glyphicon-new-window href-ico"></span></a>
             </div>
         }
     }  
