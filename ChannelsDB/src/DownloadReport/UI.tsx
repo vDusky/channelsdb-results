@@ -54,7 +54,9 @@ namespace DownloadReport.UI{
     class DownloadResultsMenu extends React.Component<{},{}>{
         render(){
             let pdbid = SimpleRouter.GlobalRouter.getCurrentPid();
-            let linkBase = `http://78.128.251.73/download/pdb/${pdbid}`;
+            let subDB = SimpleRouter.GlobalRouter.getCurrentDB();
+            let url = SimpleRouter.GlobalRouter.getChannelsURL();
+            let linkBase = subDB === "pdb" ? `${url}/download/${subDB}/${pdbid}` : `${url}/download/${subDB}/${pdbid.toLowerCase()}`;
             let items:JSX.Element[] = [];
         
             items.push(

@@ -1,4 +1,3 @@
-/*eslint-disable*/
 /*
  * Copyright (c) 2016 - now David Sehnal, licensed under Apache 2.0, See LICENSE file for more info.
  */
@@ -16,9 +15,10 @@ namespace LiteMol.Example.Channels.UI {
 
     export class App extends React.Component<{ plugin: Plugin.Controller }, { isLoading?: boolean, error?: string, data?: any, isWaitingForData?: boolean }> {
 
-        state = { isLoading: false, data: void 0, error: void 0, alphaFill: false, subDB: 'pdb'};
+        state = { isLoading: false, data: void 0, error: void 0};
 
         private currentProteinId:string;
+        private subDB:string;
 
         componentDidMount() {
             this.load();
@@ -33,9 +33,11 @@ namespace LiteMol.Example.Channels.UI {
 
         load() {
             this.currentProteinId = SimpleRouter.GlobalRouter.getCurrentPid();
+            this.subDB = SimpleRouter.GlobalRouter.getCurrentDB();
+            let channelsURL = SimpleRouter.GlobalRouter.getChannelsURL();
 
-            this.setState({ isLoading: true, error: void 0 });      //https://webchem.ncbr.muni.cz/API/ChannelsDB/PDB/1tqn
-            State.loadData(this.props.plugin, this.currentProteinId, `http://78.128.251.73/channels/${this.state.subDB}/${this.currentProteinId}`, this.state.subDB) //'channels.json'
+            this.setState({ isLoading: true, error: void 0 });
+            State.loadData(this.props.plugin, this.currentProteinId, channelsURL, this.subDB) //'channels.json'
                 .then(data => {
                     //console.log("loading done ok");
                     let _data = (this.props.plugin.context.select("channelsDB-data")[0] as Bootstrap.Entity.Data.Json).props.data as DataInterface.ChannelsDBData;
@@ -49,11 +51,6 @@ namespace LiteMol.Example.Channels.UI {
                     }
                 })
                 .catch(e => {
-                    if (!this.state.alphaFill) {
-                        this.state.subDB = 'alphafill';
-                        this.state.alphaFill = true;
-                        return this.load();
-                    }
                     console.log(`ERR on loading: ${e}`);
                     this.setState({ isLoading: false, error: 'Application was unable to load data. Please try again later.' });
                 });

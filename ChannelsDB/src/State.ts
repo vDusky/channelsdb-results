@@ -1,4 +1,3 @@
-/*eslint-disable */
 /*
  * Copyright (c) 2016 - now David Sehnal, licensed under Apache 2.0, See LICENSE file for more info.
  */
@@ -73,42 +72,55 @@ namespace LiteMol.Example.Channels.State {
             })});
     }
 
-    export function loadData(plugin: Plugin.Controller, pdbId: string, url: string, subDB: string) {
-        
+    export function loadData(plugin: Plugin.Controller, pid: string, url: string, subDB: string) {
             plugin.clear();
 
             //Subscribe for data
             Annotation.AnnotationDataProvider.subscribeToPluginContext(plugin.context);
             
             let modelLoadPromise = new Promise<any>((res,rej)=>{
-                let assemblyInfo = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { 
-                        url: `http://78.128.251.73/assembly/${pdbId}`,
-                        type: 'String', 
-                        id: 'AssemblyInfo'                        
-                    }, { isHidden: false })
-                    .then(Transformer.Data.ParseJson, { id: 'AssemblyInfo' }, { ref: 'assembly-id' });
-                plugin.applyTransform(assemblyInfo).then(() => {
-                    let parsedData = plugin.context.select('assembly-id')[0] as Bootstrap.Entity.Data.Json;
-                    if (!parsedData) throw new Error('Data not available.');
-                    else {
-                        let assemblyId = parsedData.props.data as number;
-
-                        let model = plugin.createTransform()
-                            .add(plugin.root, Transformer.Data.Download, { url: `${COORDINATE_SERVERS[COORDINATE_SERVER]}/${pdbId}/assembly?id=${assemblyId}`, type: 'String', id: pdbId })
-                            .then(Transformer.Molecule.CreateFromData, { format: Core.Formats.Molecule.SupportedFormats.mmCIF }, { isBinding: true })
-                            .then(Transformer.Molecule.CreateModel, { modelIndex: 0 })
-                            .then(Transformer.Molecule.CreateMacromoleculeVisual, { polymer: true, polymerRef: 'polymer-visual', het: true });
-
-                        plugin.applyTransform(model)
-                            .then(() => {
-                                if(plugin.context.select('polymer-visual').length!==1){
-                                    rej("Application was unable to retrieve protein structure from coordinate server.");
-                                }
-                                plugin.command(Bootstrap.Command.Entity.Focus, plugin.context.select('polymer-visual'));
-                                res(null);
-                            })
-                    }
-                });
+                if (subDB === "pdb") {
+                    let assemblyInfo = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { 
+                            url: `${url}/assembly/${pid}`,
+                            type: 'String', 
+                            id: 'AssemblyInfo'                        
+                        }, { isHidden: false })
+                        .then(Transformer.Data.ParseJson, { id: 'AssemblyInfo' }, { ref: 'assembly-id' });
+                    plugin.applyTransform(assemblyInfo).then(() => {
+                        let parsedData = plugin.context.select('assembly-id')[0] as Bootstrap.Entity.Data.Json;
+                        if (!parsedData) throw new Error('Data not available.');
+                        else {
+                            let assemblyId = parsedData.props.data as number;
+                            let model = plugin.createTransform()
+                                .add(plugin.root, Transformer.Data.Download, { url: `${COORDINATE_SERVERS[COORDINATE_SERVER]}/${pid}/assembly?id=${assemblyId}`, type: 'String', id: pid })
+                                .then(Transformer.Molecule.CreateFromData, { format: Core.Formats.Molecule.SupportedFormats.mmCIF }, { isBinding: true })
+                                .then(Transformer.Molecule.CreateModel, { modelIndex: 0 })
+                                .then(Transformer.Molecule.CreateMacromoleculeVisual, { polymer: true, polymerRef: 'polymer-visual', het: true });
+                            let faj = plugin.applyTransform(model)
+                                .then(() => {
+                                    if(plugin.context.select('polymer-visual').length!==1){
+                                        rej("Application was unable to retrieve protein structure from coordinate server.");
+                                    }
+                                    plugin.command(Bootstrap.Command.Entity.Focus, plugin.context.select('polymer-visual'));
+                                    res(null);
+                                })
+                        }
+                    });
+                } else {
+                    let model = plugin.createTransform()
+                        .add(plugin.root, Transformer.Data.Download, { url: `https://alphafill.eu/v1/aff/${pid.toUpperCase()}`, type: 'String', id: pid })
+                        .then(Transformer.Molecule.CreateFromData, { format: Core.Formats.Molecule.SupportedFormats.mmCIF }, { isBinding: true })
+                        .then(Transformer.Molecule.CreateModel, { modelIndex: 0 })
+                        .then(Transformer.Molecule.CreateMacromoleculeVisual, { polymer: true, polymerRef: 'polymer-visual', het: true });
+                    let faj = plugin.applyTransform(model)
+                        .then(() => {
+                            if(plugin.context.select('polymer-visual').length!==1){
+                                rej("Application was unable to retrieve protein structure from coordinate server.");
+                            }
+                            plugin.command(Bootstrap.Command.Entity.Focus, plugin.context.select('polymer-visual'));
+                            res(null);
+                        })
+                }
             })
 
             /*
@@ -118,10 +130,10 @@ namespace LiteMol.Example.Channels.State {
                     .then(Transformer.Molecule.CreateModel, { modelIndex: 0 })
                     .then(Transformer.Molecule.CreateMacromoleculeVisual, { polymer: true, polymerRef: 'polymer-visual', het: true })
             */
-            let data = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { url, type: 'String', id: 'MOLE Data' }, { isHidden: false })
+            let data = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { url: subDB === "pdb" ? `${url}/channels/${subDB}/${pid}` : `${url}/channels/${subDB}/${pid.toLowerCase()}`, type: 'String', id: 'MOLE Data' }, { isHidden: false })
                 .then(Transformer.Data.ParseJson, { id: 'MOLE Data' }, { ref: 'channelsDB-data' });
-                                                                                                              //https://webchem.ncbr.muni.cz/API/ChannelsDB/Annotations
-            let annotationData = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { url: `http://78.128.251.73/annotations/${subDB}/${pdbId}`, type: 'String', id: 'ChannelDB annotation Data' }, { isHidden: false })
+
+            let annotationData = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { url: subDB === "pdb" ? `${url}/annotations/${subDB}/${pid}` : `${url}/annotations/${subDB}/${pid.toLowerCase()}`, type: 'String', id: 'ChannelDB annotation Data' }, { isHidden: false })
                 .then(Transformer.Data.ParseJson, { id: 'ChannelDB annotation Data' }, { ref: 'channelsDB-annotation-data' });
 
             let promises = [];

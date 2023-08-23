@@ -36,9 +36,7 @@ var StaticData;
         Messages.get = get;
     })(Messages = StaticData.Messages || (StaticData.Messages = {}));
 })(StaticData || (StaticData = {}));
-/*eslint-disable */
 var DataInterface;
-/*eslint-disable */
 (function (DataInterface) {
     ;
     ;
@@ -711,9 +709,7 @@ var CommonUtils;
         Tabs.doAfterTabActivated = doAfterTabActivated;
     })(Tabs = CommonUtils.Tabs || (CommonUtils.Tabs = {}));
 })(CommonUtils || (CommonUtils = {}));
-/*eslint-disable*/
 var Annotation;
-/*eslint-disable*/
 (function (Annotation) {
     var LiteMoleEvent = LiteMol.Bootstrap.Event;
     ;
@@ -2223,37 +2219,7 @@ var LayersVizualizer;
     }
     LayersVizualizer.Tunnel = Tunnel;
 })(LayersVizualizer || (LayersVizualizer = {}));
-/* eslint-disable @typescript-eslint/no-namespace */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-var */
-/* eslint-disable @typescript-eslint/no-extra-semi */
-/* eslint-disable @typescript-eslint/ban-types */
-/* eslint-disable @typescript-eslint/no-inferrable-types */
-/* eslint-disable prefer-const */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable no-mixed-spaces-and-tabs */
-/* eslint-disable @typescript-eslint/restrict-template-expressions */
-/* eslint-disable @typescript-eslint/unbound-method */
 var LayersVizualizer;
-/* eslint-disable @typescript-eslint/no-namespace */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-var */
-/* eslint-disable @typescript-eslint/no-extra-semi */
-/* eslint-disable @typescript-eslint/ban-types */
-/* eslint-disable @typescript-eslint/no-inferrable-types */
-/* eslint-disable prefer-const */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable no-mixed-spaces-and-tabs */
-/* eslint-disable @typescript-eslint/restrict-template-expressions */
-/* eslint-disable @typescript-eslint/unbound-method */
 (function (LayersVizualizer) {
     ;
     ;
@@ -3984,9 +3950,7 @@ var Datagrid;
         Components.DGNoDataInfoRow = DGNoDataInfoRow;
     })(Components = Datagrid.Components || (Datagrid.Components = {}));
 })(Datagrid || (Datagrid = {}));
-/*eslint-disable */
 var AglomeredParameters;
-/*eslint-disable */
 (function (AglomeredParameters) {
     var UI;
     (function (UI) {
@@ -4618,9 +4582,7 @@ var LayerResidues;
         }
     })(UI = LayerResidues.UI || (LayerResidues.UI = {}));
 })(LayerResidues || (LayerResidues = {}));
-/*eslint-disable */
 var ResidueAnnotations;
-/*eslint-disable */
 (function (ResidueAnnotations) {
     var UI;
     (function (UI) {
@@ -4846,9 +4808,7 @@ var ResidueAnnotations;
         }
     })(UI = ResidueAnnotations.UI || (ResidueAnnotations.UI = {}));
 })(ResidueAnnotations || (ResidueAnnotations = {}));
-/* eslint-disable */
 var ProteinAnnotations;
-/* eslint-disable */
 (function (ProteinAnnotations) {
     var UI;
     (function (UI) {
@@ -5257,7 +5217,9 @@ var DownloadReport;
         class DownloadResultsMenu extends React.Component {
             render() {
                 let pdbid = SimpleRouter.GlobalRouter.getCurrentPid();
-                let linkBase = `http://78.128.251.73/download/pdb/${pdbid}`;
+                let subDB = SimpleRouter.GlobalRouter.getCurrentDB();
+                let url = SimpleRouter.GlobalRouter.getChannelsURL();
+                let linkBase = subDB === "pdb" ? `${url}/download/${subDB}/${pdbid}` : `${url}/download/${subDB}/${pdbid.toLowerCase()}`;
                 let items = [];
                 items.push(React.createElement(BootstrapDropDownMenuItem, { linkText: ".zip", link: `${linkBase}/zip`, targetBlank: true }));
                 items.push(React.createElement(BootstrapDropDownMenuItem, { linkText: ".pdb", link: `${linkBase}/pdb`, targetBlank: true }));
@@ -5438,8 +5400,10 @@ var SimpleRouter;
             this.useLastPathPartAsPid = (routingParameters.useLastPathPartAsPid === void 0) ? false : routingParameters.useLastPathPartAsPid;
             this.router = new Router(routingParameters.defaultContextPath);
             let url = this.router.getAbsoluePath();
+            let subDB = null;
             let pid = null;
             if (this.useParameterAsPid === true) {
+                subDB = url.getParameterValue("subDB");
                 pid = url.getParameterValue("pid");
             }
             else if (this.useLastPathPartAsPid === true) {
@@ -5447,12 +5411,23 @@ var SimpleRouter;
                 pid = lastPathPartAsParam === "" ? null : lastPathPartAsParam;
             }
             this.currentPid = (pid !== null) ? pid : this.defaultPid;
+            this.subDB = (subDB !== null) ? subDB : this.defaultDB;
             if (pid !== this.currentPid) {
                 if (this.useParameterAsPid === true) {
-                    this.router.changeUrl("detail", document.title, `${url}/?pid=${this.currentPid}`);
+                    this.router.changeUrl("detail", document.title, `${url}/pdb/${this.currentPid}`);
                 }
                 else if (this.useLastPathPartAsPid === true) {
-                    this.router.changeUrl("detail", document.title, `${url}/${this.currentPid}`);
+                    subDB
+                        ? this.router.changeUrl("detail", document.title, `${subDB}/${this.currentPid}`)
+                        : this.router.changeUrl("detail", document.title, `${url}/${this.currentPid}`);
+                }
+            }
+            else {
+                if (subDB) {
+                    this.router.changeUrl("detail", document.title, `${subDB}/${this.currentPid}`);
+                }
+                else if (this.useLastPathPartAsPid === true) {
+                    this.router.changeUrl("detail", document.title, `${url}/detail/${this.currentPid}`);
                 }
             }
             this.isInitialized = true;
@@ -5463,16 +5438,27 @@ var SimpleRouter;
             }
             return this.currentPid;
         }
+        static getCurrentDB() {
+            if (!this.isInitialized) {
+                throw new Error("GlobalRouter is not inititalised! Call init(..) function before use!");
+            }
+            return this.subDB;
+        }
+        static getChannelsURL() {
+            if (!this.isInitialized) {
+                throw new Error("GlobalRouter is not inititalised! Call init(..) function before use!");
+            }
+            return this.defaultChannelsURL;
+        }
     }
+    GlobalRouter.defaultChannelsURL = "http://channelsdb2.biodata.ceitec.cz";
     GlobalRouter.isInitialized = false;
     SimpleRouter.GlobalRouter = GlobalRouter;
 })(SimpleRouter || (SimpleRouter = {}));
-/*eslint-disable */
 /*
  * Copyright (c) 2016 - now David Sehnal, licensed under Apache 2.0, See LICENSE file for more info.
  */
 var LiteMol;
-/*eslint-disable */
 /*
  * Copyright (c) 2016 - now David Sehnal, licensed under Apache 2.0, See LICENSE file for more info.
  */
@@ -5542,38 +5528,55 @@ var LiteMol;
                         });
                     });
                 }
-                function loadData(plugin, pdbId, url, subDB) {
+                function loadData(plugin, pid, url, subDB) {
                     plugin.clear();
                     //Subscribe for data
                     Annotation.AnnotationDataProvider.subscribeToPluginContext(plugin.context);
                     let modelLoadPromise = new LiteMol.Promise((res, rej) => {
-                        let assemblyInfo = plugin.createTransform().add(plugin.root, Transformer.Data.Download, {
-                            url: `http://78.128.251.73/assembly/${pdbId}`,
-                            type: 'String',
-                            id: 'AssemblyInfo'
-                        }, { isHidden: false })
-                            .then(Transformer.Data.ParseJson, { id: 'AssemblyInfo' }, { ref: 'assembly-id' });
-                        plugin.applyTransform(assemblyInfo).then(() => {
-                            let parsedData = plugin.context.select('assembly-id')[0];
-                            if (!parsedData)
-                                throw new Error('Data not available.');
-                            else {
-                                let assemblyId = parsedData.props.data;
-                                let model = plugin.createTransform()
-                                    .add(plugin.root, Transformer.Data.Download, { url: `${COORDINATE_SERVERS[COORDINATE_SERVER]}/${pdbId}/assembly?id=${assemblyId}`, type: 'String', id: pdbId })
-                                    .then(Transformer.Molecule.CreateFromData, { format: LiteMol.Core.Formats.Molecule.SupportedFormats.mmCIF }, { isBinding: true })
-                                    .then(Transformer.Molecule.CreateModel, { modelIndex: 0 })
-                                    .then(Transformer.Molecule.CreateMacromoleculeVisual, { polymer: true, polymerRef: 'polymer-visual', het: true });
-                                plugin.applyTransform(model)
-                                    .then(() => {
-                                    if (plugin.context.select('polymer-visual').length !== 1) {
-                                        rej("Application was unable to retrieve protein structure from coordinate server.");
-                                    }
-                                    plugin.command(LiteMol.Bootstrap.Command.Entity.Focus, plugin.context.select('polymer-visual'));
-                                    res(null);
-                                });
-                            }
-                        });
+                        if (subDB === "pdb") {
+                            let assemblyInfo = plugin.createTransform().add(plugin.root, Transformer.Data.Download, {
+                                url: `${url}/assembly/${pid}`,
+                                type: 'String',
+                                id: 'AssemblyInfo'
+                            }, { isHidden: false })
+                                .then(Transformer.Data.ParseJson, { id: 'AssemblyInfo' }, { ref: 'assembly-id' });
+                            plugin.applyTransform(assemblyInfo).then(() => {
+                                let parsedData = plugin.context.select('assembly-id')[0];
+                                if (!parsedData)
+                                    throw new Error('Data not available.');
+                                else {
+                                    let assemblyId = parsedData.props.data;
+                                    let model = plugin.createTransform()
+                                        .add(plugin.root, Transformer.Data.Download, { url: `${COORDINATE_SERVERS[COORDINATE_SERVER]}/${pid}/assembly?id=${assemblyId}`, type: 'String', id: pid })
+                                        .then(Transformer.Molecule.CreateFromData, { format: LiteMol.Core.Formats.Molecule.SupportedFormats.mmCIF }, { isBinding: true })
+                                        .then(Transformer.Molecule.CreateModel, { modelIndex: 0 })
+                                        .then(Transformer.Molecule.CreateMacromoleculeVisual, { polymer: true, polymerRef: 'polymer-visual', het: true });
+                                    let faj = plugin.applyTransform(model)
+                                        .then(() => {
+                                        if (plugin.context.select('polymer-visual').length !== 1) {
+                                            rej("Application was unable to retrieve protein structure from coordinate server.");
+                                        }
+                                        plugin.command(LiteMol.Bootstrap.Command.Entity.Focus, plugin.context.select('polymer-visual'));
+                                        res(null);
+                                    });
+                                }
+                            });
+                        }
+                        else {
+                            let model = plugin.createTransform()
+                                .add(plugin.root, Transformer.Data.Download, { url: `https://alphafill.eu/v1/aff/${pid.toUpperCase()}`, type: 'String', id: pid })
+                                .then(Transformer.Molecule.CreateFromData, { format: LiteMol.Core.Formats.Molecule.SupportedFormats.mmCIF }, { isBinding: true })
+                                .then(Transformer.Molecule.CreateModel, { modelIndex: 0 })
+                                .then(Transformer.Molecule.CreateMacromoleculeVisual, { polymer: true, polymerRef: 'polymer-visual', het: true });
+                            let faj = plugin.applyTransform(model)
+                                .then(() => {
+                                if (plugin.context.select('polymer-visual').length !== 1) {
+                                    rej("Application was unable to retrieve protein structure from coordinate server.");
+                                }
+                                plugin.command(LiteMol.Bootstrap.Command.Entity.Focus, plugin.context.select('polymer-visual'));
+                                res(null);
+                            });
+                        }
                     });
                     /*
                     let model = plugin.createTransform()
@@ -5582,10 +5585,9 @@ var LiteMol;
                             .then(Transformer.Molecule.CreateModel, { modelIndex: 0 })
                             .then(Transformer.Molecule.CreateMacromoleculeVisual, { polymer: true, polymerRef: 'polymer-visual', het: true })
                     */
-                    let data = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { url, type: 'String', id: 'MOLE Data' }, { isHidden: false })
+                    let data = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { url: subDB === "pdb" ? `${url}/channels/${subDB}/${pid}` : `${url}/channels/${subDB}/${pid.toLowerCase()}`, type: 'String', id: 'MOLE Data' }, { isHidden: false })
                         .then(Transformer.Data.ParseJson, { id: 'MOLE Data' }, { ref: 'channelsDB-data' });
-                    //https://webchem.ncbr.muni.cz/API/ChannelsDB/Annotations
-                    let annotationData = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { url: `http://78.128.251.73/annotations/${subDB}/${pdbId}`, type: 'String', id: 'ChannelDB annotation Data' }, { isHidden: false })
+                    let annotationData = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { url: subDB === "pdb" ? `${url}/annotations/${subDB}/${pid}` : `${url}/annotations/${subDB}/${pid.toLowerCase()}`, type: 'String', id: 'ChannelDB annotation Data' }, { isHidden: false })
                         .then(Transformer.Data.ParseJson, { id: 'ChannelDB annotation Data' }, { ref: 'channelsDB-annotation-data' });
                     let promises = [];
                     promises.push(modelLoadPromise);
@@ -6103,12 +6105,10 @@ var LiteMol;
         })(Channels = Example.Channels || (Example.Channels = {}));
     })(Example = LiteMol.Example || (LiteMol.Example = {}));
 })(LiteMol || (LiteMol = {}));
-/*eslint-disable*/
 /*
  * Copyright (c) 2016 - now David Sehnal, licensed under Apache 2.0, See LICENSE file for more info.
  */
 var LiteMol;
-/*eslint-disable*/
 /*
  * Copyright (c) 2016 - now David Sehnal, licensed under Apache 2.0, See LICENSE file for more info.
  */
@@ -6127,7 +6127,7 @@ var LiteMol;
                 class App extends React.Component {
                     constructor() {
                         super(...arguments);
-                        this.state = { isLoading: false, data: void 0, error: void 0, alphaFill: false, subDB: 'pdb' };
+                        this.state = { isLoading: false, data: void 0, error: void 0 };
                     }
                     componentDidMount() {
                         this.load();
@@ -6140,8 +6140,10 @@ var LiteMol;
                     }
                     load() {
                         this.currentProteinId = SimpleRouter.GlobalRouter.getCurrentPid();
-                        this.setState({ isLoading: true, error: void 0 }); //https://webchem.ncbr.muni.cz/API/ChannelsDB/PDB/1tqn
-                        Channels_1.State.loadData(this.props.plugin, this.currentProteinId, `http://78.128.251.73/channels/${this.state.subDB}/${this.currentProteinId}`, this.state.subDB) //'channels.json'
+                        this.subDB = SimpleRouter.GlobalRouter.getCurrentDB();
+                        let channelsURL = SimpleRouter.GlobalRouter.getChannelsURL();
+                        this.setState({ isLoading: true, error: void 0 });
+                        Channels_1.State.loadData(this.props.plugin, this.currentProteinId, channelsURL, this.subDB) //'channels.json'
                             .then(data => {
                             //console.log("loading done ok");
                             let _data = this.props.plugin.context.select("channelsDB-data")[0].props.data;
@@ -6155,11 +6157,6 @@ var LiteMol;
                             }
                         })
                             .catch(e => {
-                            if (!this.state.alphaFill) {
-                                this.state.subDB = 'alphafill';
-                                this.state.alphaFill = true;
-                                return this.load();
-                            }
                             console.log(`ERR on loading: ${e}`);
                             this.setState({ isLoading: false, error: 'Application was unable to load data. Please try again later.' });
                         });
@@ -6695,10 +6692,10 @@ var LiteMol;
             var Vizualizer = LayersVizualizer;
             (function () {
                 const ROUTING_OPTIONS = {
-                    "local": { defaultContextPath: "/ChannelsDB", defaultPid: "5an8", useParameterAsPid: true },
-                    "chdb-test": { defaultContextPath: "/ChannelsDB/detail", defaultPid: "5an8", useLastPathPartAsPid: true },
-                    "test": { defaultContextPath: "/test/detail", defaultPid: "5an8", useLastPathPartAsPid: true },
-                    "chdb-prod": { defaultContextPath: "/ChannelsDB/detail", defaultPid: "137l", useLastPathPartAsPid: true }, //7tmt, 137l
+                    "local": { defaultContextPath: "/detail", defaultPid: "5an8", defaultDB: "pdb", useParameterAsPid: true },
+                    "chdb-test": { defaultContextPath: "/detail", defaultPid: "5an8", defaultDB: "pdb", useLastPathPartAsPid: true },
+                    "test": { defaultContextPath: "/test/detail", defaultPid: "5an8", defaultDB: "pdb", useLastPathPartAsPid: true },
+                    "chdb-prod": { defaultContextPath: "/detail", defaultPid: "5an8", defaultDB: "pdb", useParameterAsPid: true },
                 };
                 const ROUTING_MODE = "chdb-prod";
                 const lvSettings = {

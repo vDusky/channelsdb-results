@@ -1,7 +1,6 @@
 ﻿/*
  * Copyright (c) 2016 - now David Sehnal, licensed under Apache 2.0, See LICENSE file for more info.
  */
-
 namespace LiteMol.Example.Channels {
     // all commands and events can be found in Bootstrap/Event folder.
     // easy to follow the types and parameters in VSCode.
@@ -13,13 +12,12 @@ namespace LiteMol.Example.Channels {
 
     (function() {
         const ROUTING_OPTIONS:any = {
-            "local":{defaultContextPath: "/ChannelsDB", defaultPid:"5an8", useParameterAsPid:true},
-            "chdb-test":{defaultContextPath: "/ChannelsDB/detail", defaultPid:"5an8", useLastPathPartAsPid:true},
-            "test":{defaultContextPath: "/test/detail", defaultPid:"5an8", useLastPathPartAsPid:true},
-            "chdb-prod":{defaultContextPath: "/ChannelsDB/detail", defaultPid:"137l", useLastPathPartAsPid:true},//7tmt, 137l
+            "local":{defaultContextPath: "/detail", defaultPid:"5an8", defaultDB: "pdb", useParameterAsPid:true},
+            "chdb-test":{defaultContextPath: "/detail", defaultPid:"5an8", defaultDB: "pdb", useLastPathPartAsPid:true},
+            "test":{defaultContextPath: "/test/detail", defaultPid:"5an8", defaultDB: "pdb", useLastPathPartAsPid:true},
+            "chdb-prod":{defaultContextPath: "/detail", defaultPid:"5an8", defaultDB: "pdb", useParameterAsPid: true},
         };
         const ROUTING_MODE = "chdb-prod";
-        
 
         const lvSettings: LayersVizualizer.LayersVizualizerSettings = {
             coloringProperty: "Hydropathy",
