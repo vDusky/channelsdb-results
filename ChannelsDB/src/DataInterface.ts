@@ -1,4 +1,3 @@
-/*eslint-disable */
 namespace DataInterface{
     export interface LayerGeometry{
         MinRadius:number,

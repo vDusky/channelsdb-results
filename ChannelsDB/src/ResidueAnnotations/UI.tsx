@@ -1,4 +1,3 @@
-/*eslint-disable */
 namespace ResidueAnnotations.UI{
 
     import React = LiteMol.Plugin.React

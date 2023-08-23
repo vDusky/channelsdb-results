@@ -1,4 +1,3 @@
-/* eslint-disable */
 namespace ProteinAnnotations.UI{
 
     import React = LiteMol.Plugin.React

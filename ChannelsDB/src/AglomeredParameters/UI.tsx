@@ -1,4 +1,3 @@
-/*eslint-disable */
 namespace AglomeredParameters.UI{
 
     import React = LiteMol.Plugin.React

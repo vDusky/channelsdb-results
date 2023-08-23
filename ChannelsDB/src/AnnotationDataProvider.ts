@@ -1,4 +1,3 @@
-/*eslint-disable*/
 namespace Annotation{
 
     import LiteMoleEvent = LiteMol.Bootstrap.Event;
