@@ -5248,10 +5248,11 @@ var PdbIdSign;
             componentWillUnmount() {
             }
             render() {
-                let pdbid = SimpleRouter.GlobalRouter.getCurrentPid();
+                let pid = SimpleRouter.GlobalRouter.getCurrentPid();
+                let subDB = SimpleRouter.GlobalRouter.getCurrentDB();
                 return React.createElement("div", null,
-                    React.createElement("a", { href: `https://pdbe.org/${pdbid}`, target: "_blank" },
-                        pdbid,
+                    React.createElement("a", { href: subDB === "pdb" ? `https://pdbe.org/${pid}` : `https://alphafill.eu/model?id=${pid}`, style: subDB === "pdb" ? {} : { fontSize: "14" }, target: "_blank" },
+                        pid,
                         " ",
                         React.createElement("span", { className: "glyphicon glyphicon-new-window href-ico" })));
             }
@@ -5398,6 +5399,7 @@ var SimpleRouter;
             this.defaultPid = routingParameters.defaultPid;
             this.useParameterAsPid = (routingParameters.useParameterAsPid === void 0) ? false : routingParameters.useParameterAsPid;
             this.useLastPathPartAsPid = (routingParameters.useLastPathPartAsPid === void 0) ? false : routingParameters.useLastPathPartAsPid;
+            this.defaultDB = routingParameters.defaultDB;
             this.router = new Router(routingParameters.defaultContextPath);
             let url = this.router.getAbsoluePath();
             let subDB = null;
@@ -5414,20 +5416,20 @@ var SimpleRouter;
             this.subDB = (subDB !== null) ? subDB : this.defaultDB;
             if (pid !== this.currentPid) {
                 if (this.useParameterAsPid === true) {
-                    this.router.changeUrl("detail", document.title, `${url}/pdb/${this.currentPid}`);
+                    this.router.changeUrl("ChannelsDB", document.title, `${url}/pdb/${this.currentPid}`);
                 }
                 else if (this.useLastPathPartAsPid === true) {
                     subDB
-                        ? this.router.changeUrl("detail", document.title, `${subDB}/${this.currentPid}`)
-                        : this.router.changeUrl("detail", document.title, `${url}/${this.currentPid}`);
+                        ? this.router.changeUrl("ChannelsDB", document.title, `${subDB}/${this.currentPid}`)
+                        : this.router.changeUrl("ChannelsDB", document.title, `${url}/${this.currentPid}`);
                 }
             }
             else {
                 if (subDB) {
-                    this.router.changeUrl("detail", document.title, `${subDB}/${this.currentPid}`);
+                    this.router.changeUrl("ChannelsDB", document.title, `${subDB}/${this.currentPid}`);
                 }
                 else if (this.useLastPathPartAsPid === true) {
-                    this.router.changeUrl("detail", document.title, `${url}/detail/${this.currentPid}`);
+                    this.router.changeUrl("ChannelsDB", document.title, `${url}/ChannelsDB/${this.currentPid}`);
                 }
             }
             this.isInitialized = true;
@@ -6692,10 +6694,10 @@ var LiteMol;
             var Vizualizer = LayersVizualizer;
             (function () {
                 const ROUTING_OPTIONS = {
-                    "local": { defaultContextPath: "/detail", defaultPid: "5an8", defaultDB: "pdb", useParameterAsPid: true },
-                    "chdb-test": { defaultContextPath: "/detail", defaultPid: "5an8", defaultDB: "pdb", useLastPathPartAsPid: true },
-                    "test": { defaultContextPath: "/test/detail", defaultPid: "5an8", defaultDB: "pdb", useLastPathPartAsPid: true },
-                    "chdb-prod": { defaultContextPath: "/detail", defaultPid: "5an8", defaultDB: "pdb", useParameterAsPid: true },
+                    "local": { defaultContextPath: "/ChannelsDB", defaultPid: "5an8", defaultDB: "pdb", useParameterAsPid: true },
+                    "chdb-test": { defaultContextPath: "/ChannelsDB", defaultPid: "5an8", defaultDB: "pdb", useLastPathPartAsPid: true },
+                    "test": { defaultContextPath: "/test/ChannelsDB", defaultPid: "5an8", defaultDB: "pdb", useLastPathPartAsPid: true },
+                    "chdb-prod": { defaultContextPath: "/ChannelsDB", defaultPid: "5an8", defaultDB: "pdb", useParameterAsPid: true },
                 };
                 const ROUTING_MODE = "chdb-prod";
                 const lvSettings = {
