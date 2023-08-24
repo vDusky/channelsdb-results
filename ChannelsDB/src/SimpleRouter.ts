@@ -220,19 +220,19 @@ namespace SimpleRouter{
             this.subDB = (subDB !== null) ? subDB : this.defaultDB;
             if(pid !== this.currentPid){
                 if(this.useParameterAsPid === true){
-                    this.router.changeUrl("ChannelsDB",document.title,`${url}/pdb/${this.currentPid}`);
+                    this.router.changeUrl("detail",document.title,`${url}/pdb/${this.currentPid}`);
                 }
                 else if(this.useLastPathPartAsPid === true){
                     subDB 
-                    ? this.router.changeUrl("ChannelsDB",document.title,`${subDB}/${this.currentPid}`)
-                    : this.router.changeUrl("ChannelsDB",document.title,`${url}/${this.currentPid}`);
+                    ? this.router.changeUrl("detail",document.title,`${subDB}/${this.currentPid}`)
+                    : this.router.changeUrl("detail",document.title,`${url}/${this.currentPid}`);
                 }
             } else {
                 if(subDB){
-                    this.router.changeUrl("ChannelsDB",document.title,`${subDB}/${this.currentPid}`);
+                    this.router.changeUrl("detail",document.title,`${subDB}/${this.currentPid}`);
                 }
                 else if(this.useLastPathPartAsPid === true){
-                    this.router.changeUrl("ChannelsDB",document.title,`${url}/ChannelsDB/${this.currentPid}`);
+                    this.router.changeUrl("detail",document.title,`${url}/detail/${this.currentPid}`);
                 }
             }
 

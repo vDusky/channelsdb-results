@@ -5416,20 +5416,20 @@ var SimpleRouter;
             this.subDB = (subDB !== null) ? subDB : this.defaultDB;
             if (pid !== this.currentPid) {
                 if (this.useParameterAsPid === true) {
-                    this.router.changeUrl("ChannelsDB", document.title, `${url}/pdb/${this.currentPid}`);
+                    this.router.changeUrl("detail", document.title, `${url}/pdb/${this.currentPid}`);
                 }
                 else if (this.useLastPathPartAsPid === true) {
                     subDB
-                        ? this.router.changeUrl("ChannelsDB", document.title, `${subDB}/${this.currentPid}`)
-                        : this.router.changeUrl("ChannelsDB", document.title, `${url}/${this.currentPid}`);
+                        ? this.router.changeUrl("detail", document.title, `${subDB}/${this.currentPid}`)
+                        : this.router.changeUrl("detail", document.title, `${url}/${this.currentPid}`);
                 }
             }
             else {
                 if (subDB) {
-                    this.router.changeUrl("ChannelsDB", document.title, `${subDB}/${this.currentPid}`);
+                    this.router.changeUrl("detail", document.title, `${subDB}/${this.currentPid}`);
                 }
                 else if (this.useLastPathPartAsPid === true) {
-                    this.router.changeUrl("ChannelsDB", document.title, `${url}/ChannelsDB/${this.currentPid}`);
+                    this.router.changeUrl("detail", document.title, `${url}/detail/${this.currentPid}`);
                 }
             }
             this.isInitialized = true;
@@ -6694,10 +6694,10 @@ var LiteMol;
             var Vizualizer = LayersVizualizer;
             (function () {
                 const ROUTING_OPTIONS = {
-                    "local": { defaultContextPath: "/ChannelsDB", defaultPid: "5an8", defaultDB: "pdb", useParameterAsPid: true },
-                    "chdb-test": { defaultContextPath: "/ChannelsDB", defaultPid: "5an8", defaultDB: "pdb", useLastPathPartAsPid: true },
-                    "test": { defaultContextPath: "/test/ChannelsDB", defaultPid: "5an8", defaultDB: "pdb", useLastPathPartAsPid: true },
-                    "chdb-prod": { defaultContextPath: "/ChannelsDB", defaultPid: "5an8", defaultDB: "pdb", useParameterAsPid: true },
+                    "local": { defaultContextPath: "/detail", defaultPid: "5an8", defaultDB: "pdb", useParameterAsPid: true },
+                    "chdb-test": { defaultContextPath: "/detail", defaultPid: "5an8", defaultDB: "pdb", useLastPathPartAsPid: true },
+                    "test": { defaultContextPath: "/test/detail", defaultPid: "5an8", defaultDB: "pdb", useLastPathPartAsPid: true },
+                    "chdb-prod": { defaultContextPath: "/detail", defaultPid: "5an8", defaultDB: "pdb", useParameterAsPid: true },
                 };
                 const ROUTING_MODE = "chdb-prod";
                 const lvSettings = {

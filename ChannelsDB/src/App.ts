@@ -12,10 +12,10 @@ namespace LiteMol.Example.Channels {
 
     (function() {
         const ROUTING_OPTIONS:any = {
-            "local":{defaultContextPath: "/ChannelsDB", defaultPid:"5an8", defaultDB: "pdb", useParameterAsPid:true},
-            "chdb-test":{defaultContextPath: "/ChannelsDB", defaultPid:"5an8", defaultDB: "pdb", useLastPathPartAsPid:true},
-            "test":{defaultContextPath: "/test/ChannelsDB", defaultPid:"5an8", defaultDB: "pdb", useLastPathPartAsPid:true},
-            "chdb-prod":{defaultContextPath: "/ChannelsDB", defaultPid:"5an8", defaultDB: "pdb", useParameterAsPid: true},
+            "local":{defaultContextPath: "/detail", defaultPid:"5an8", defaultDB: "pdb", useParameterAsPid:true},
+            "chdb-test":{defaultContextPath: "/detail", defaultPid:"5an8", defaultDB: "pdb", useLastPathPartAsPid:true},
+            "test":{defaultContextPath: "/test/detail", defaultPid:"5an8", defaultDB: "pdb", useLastPathPartAsPid:true},
+            "chdb-prod":{defaultContextPath: "/detail", defaultPid:"5an8", defaultDB: "pdb", useParameterAsPid: true},
         };
         const ROUTING_MODE = "chdb-prod";
 
