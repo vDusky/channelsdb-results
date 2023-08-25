@@ -4733,7 +4733,7 @@ var ResidueAnnotations;
             render() {
                 return (React.createElement("table", null,
                     React.createElement("tr", null,
-                        React.createElement("th", { title: "Residue", className: "col col-1" }, "Residues"),
+                        React.createElement("th", { title: "Residue", className: "col col-1" }, "Residue"),
                         React.createElement("th", { title: "Annotation", className: "col col-2" }, "Annotation"))));
             }
             ;
