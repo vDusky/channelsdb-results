@@ -1,7 +1,7 @@
 import { exec } from 'child_process'
-import * as byline from 'byline'
+import bl from 'byline'
 import * as gutil from 'gulp-util'
-declare var Promise: any;
+declare let Promise: any;
 
 function log(isError: boolean, line: string) {
     if (line.toLowerCase().indexOf('error') > 0) isError = true;
@@ -16,16 +16,17 @@ type Config = {
 }
 
 function execTscProject(config: Config, callback: (err: any) => void) {
-    let command = config.out 
+    const command = config.out 
         ? `"./node_modules/.bin/tsc" -p "${config.project}" --out "${config.out}"`
-        : `"./node_modules/.bin/tsc" -p "${config.project}" --outDir "${config.outDir}"`;
-    let proc = exec(command);
-    let stdout = byline(proc.stdout);
-    let stderr = byline(proc.stderr);
+        : `"./node_modules/.bin/tsc" -p "${config.project}" --outDir "${config.outDir!}"`;
+    const proc = exec(command);
+    const stdout = bl(proc.stdout!);
+    const stderr = bl(proc.stderr!);
 
     proc.on('exit', function (code) {
         if (code !== 0) {
-            let err = new Error('TypeScript compile failed');
+            const err = new Error('TypeScript compile failed');
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
             (err as any).showStack =false;
             callback(err);
         } else {
@@ -39,7 +40,7 @@ function execTscProject(config: Config, callback: (err: any) => void) {
 }
 
 function compile(config: Config, out?: string) {
-    return new Promise((res, rej) => {
+    return new Promise((res: any, rej: any) => {
         execTscProject(config, (err) => {
             if (err) rej(err);
             else res();

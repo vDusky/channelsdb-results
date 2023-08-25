@@ -1,6 +1,9 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "moduleResolution": "Node",
+    "skipLibCheck": true,
+    "ignoreDeprecations": "5.0",
     "noImplicitAny": true,
     "noEmitOnError": true,
     "removeComments": false,
@@ -8,8 +11,8 @@
     "declaration": false,
     "strictNullChecks": true,
     "noImplicitThis": true,
-    "lib": [ "es5", "es2015.collection", "dom", "es2015.promise"],
-    "target": "es5",
+    "lib": [ "es6", "es2015.collection", "dom", "es2015.promise"],
+    "target": "es6",
     "jsx": "react",
     "module": "system",
     "types": [],

@@ -21,69 +21,106 @@ namespace LiteMol.Example.Channels.State {
     function showDefaultVisuals(plugin: Plugin.Controller, data: any, channelCount: number) {
         return new Promise(res => {
             let toShow = [];
-            if(data.ReviewedChannels.length > 0){
-                toShow = data.ReviewedChannels;
+            if(data.CSATunnels_MOLE.length > 0){
+                toShow = data.CSATunnels_MOLE;
             }
-            else if(data.CSATunnels.length > 0){
-                toShow = data.CSATunnels;
+            else if(data.CSATunnels_Caver.length > 0){
+                toShow = data.CSATunnels_Caver;
             }
-            else if(data.TransmembranePores.length > 0){
-                toShow = data.TransmembranePores;
+            else if(data.ReviewedChannels_MOLE.length > 0){
+                toShow = data.ReviewedChannels_MOLE;
             }
-            else if(data.CofactorTunnels.length > 0){
-                toShow = data.CofactorTunnels;
+            else if(data.ReviewedChannels_Caver.length > 0){
+                toShow = data.ReviewedChannels_Caver;
+            }
+            else if(data.CofactorTunnels_MOLE.length > 0){
+                toShow = data.CofactorTunnels_MOLE;
+            }
+            else if(data.CofactorTunnels_Caver.length > 0){
+                toShow = data.CofactorTunnels_Caver;
+            }
+            else if(data.TransmembranePores_MOLE.length > 0){
+                toShow = data.TransmembranePores_MOLE;
+            }
+            else if(data.TransmembranePores_Caver.length > 0){
+                toShow = data.TransmembranePores_Caver;
+            }
+            else if(data.ProcognateTunnels_MOLE.length > 0){
+                toShow = data.ProcognateTunnels_MOLE;
+            }
+            else if(data.ProcagnateTunnels_Caver.length > 0){
+                toShow = data.ProcagnateTunnels_Caver;
+            }
+            else if(data.AlphaFillTunnels_MOLE.length > 0){
+                toShow = data.AlphaFillTunnels_MOLE;
+            }
+            else if(data.AlphaFillTunnels_Caver.length > 0){
+                toShow = data.AlphaFillTunnels_Caver;
             }
             
             return showChannelVisuals(plugin, toShow/*.slice(0, channelCount)*/, true).then(() => {
                 if(data.Cavities === void 0){
-                    res();
+                    res(null);
                     return;
                 }
                 let cavity = data.Cavities.Cavities[0];
                 if (!cavity) {
-                    res();
+                    res(null);
                     return;
                 }
-                showCavityVisuals(plugin, [cavity ], true).then(() => res());
+                showCavityVisuals(plugin, [cavity ], true).then(() => res(null));
             })});
     }
 
-    export function loadData(plugin: Plugin.Controller, pdbId: string, url: string) {
-        
+    export function loadData(plugin: Plugin.Controller, pid: string, url: string, subDB: string) {
             plugin.clear();
 
             //Subscribe for data
             Annotation.AnnotationDataProvider.subscribeToPluginContext(plugin.context);
             
             let modelLoadPromise = new Promise<any>((res,rej)=>{
-                let assemblyInfo = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { 
-                        url: `https://webchem.ncbr.muni.cz/API/ChannelsDB/Assembly/${pdbId}`, 
-                        type: 'String', 
-                        id: 'AssemblyInfo'                        
-                    }, { isHidden: false })
-                    .then(Transformer.Data.ParseJson, { id: 'AssemblyInfo' }, { ref: 'assembly-id' });
-                plugin.applyTransform(assemblyInfo).then(() => {
-                    let parsedData = plugin.context.select('assembly-id')[0] as Bootstrap.Entity.Data.Json;
-                    if (!parsedData) throw new Error('Data not available.');
-                    else {
-                        let assemblyId = parsedData.props.data.AssemblyID as number;
-
-                        let model = plugin.createTransform()
-                            .add(plugin.root, Transformer.Data.Download, { url: `${COORDINATE_SERVERS[COORDINATE_SERVER]}/${pdbId}/assembly?id=${assemblyId}`, type: 'String', id: pdbId })
-                            .then(Transformer.Molecule.CreateFromData, { format: Core.Formats.Molecule.SupportedFormats.mmCIF }, { isBinding: true })
-                            .then(Transformer.Molecule.CreateModel, { modelIndex: 0 })
-                            .then(Transformer.Molecule.CreateMacromoleculeVisual, { polymer: true, polymerRef: 'polymer-visual', het: true });
-
-                        plugin.applyTransform(model)
-                            .then(() => {
-                                if(plugin.context.select('polymer-visual').length!==1){
-                                    rej("Application was unable to retrieve protein structure from coordinate server.");
-                                }
-                                plugin.command(Bootstrap.Command.Entity.Focus, plugin.context.select('polymer-visual'));
-                                res();
-                            })
-                    }
-                });
+                if (subDB === "pdb") {
+                    let assemblyInfo = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { 
+                            url: `${url}/assembly/${pid}`,
+                            type: 'String', 
+                            id: 'AssemblyInfo'                        
+                        }, { isHidden: false })
+                        .then(Transformer.Data.ParseJson, { id: 'AssemblyInfo' }, { ref: 'assembly-id' });
+                    plugin.applyTransform(assemblyInfo).then(() => {
+                        let parsedData = plugin.context.select('assembly-id')[0] as Bootstrap.Entity.Data.Json;
+                        if (!parsedData) throw new Error('Data not available.');
+                        else {
+                            let assemblyId = parsedData.props.data as number;
+                            let model = plugin.createTransform()
+                                .add(plugin.root, Transformer.Data.Download, { url: `${COORDINATE_SERVERS[COORDINATE_SERVER]}/${pid}/assembly?id=${assemblyId}`, type: 'String', id: pid })
+                                .then(Transformer.Molecule.CreateFromData, { format: Core.Formats.Molecule.SupportedFormats.mmCIF }, { isBinding: true })
+                                .then(Transformer.Molecule.CreateModel, { modelIndex: 0 })
+                                .then(Transformer.Molecule.CreateMacromoleculeVisual, { polymer: true, polymerRef: 'polymer-visual', het: true });
+                            let faj = plugin.applyTransform(model)
+                                .then(() => {
+                                    if(plugin.context.select('polymer-visual').length!==1){
+                                        rej("Application was unable to retrieve protein structure from coordinate server.");
+                                    }
+                                    plugin.command(Bootstrap.Command.Entity.Focus, plugin.context.select('polymer-visual'));
+                                    res(null);
+                                })
+                        }
+                    });
+                } else {
+                    let model = plugin.createTransform()
+                        .add(plugin.root, Transformer.Data.Download, { url: `https://alphafill.eu/v1/aff/${pid.toUpperCase()}`, type: 'String', id: pid })
+                        .then(Transformer.Molecule.CreateFromData, { format: Core.Formats.Molecule.SupportedFormats.mmCIF }, { isBinding: true })
+                        .then(Transformer.Molecule.CreateModel, { modelIndex: 0 })
+                        .then(Transformer.Molecule.CreateMacromoleculeVisual, { polymer: true, polymerRef: 'polymer-visual', het: true });
+                    let faj = plugin.applyTransform(model)
+                        .then(() => {
+                            if(plugin.context.select('polymer-visual').length!==1){
+                                rej("Application was unable to retrieve protein structure from coordinate server.");
+                            }
+                            plugin.command(Bootstrap.Command.Entity.Focus, plugin.context.select('polymer-visual'));
+                            res(null);
+                        })
+                }
             })
 
             /*
@@ -93,10 +130,10 @@ namespace LiteMol.Example.Channels.State {
                     .then(Transformer.Molecule.CreateModel, { modelIndex: 0 })
                     .then(Transformer.Molecule.CreateMacromoleculeVisual, { polymer: true, polymerRef: 'polymer-visual', het: true })
             */
-            let data = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { url, type: 'String', id: 'MOLE Data' }, { isHidden: false })
-                .then(Transformer.Data.ParseJson, { id: 'MOLE Data' }, { ref: 'mole-data' });
+            let data = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { url: subDB === "pdb" ? `${url}/channels/${subDB}/${pid}` : `${url}/channels/${subDB}/${pid.toLowerCase()}`, type: 'String', id: 'MOLE Data' }, { isHidden: false })
+                .then(Transformer.Data.ParseJson, { id: 'MOLE Data' }, { ref: 'channelsDB-data' });
 
-            let annotationData = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { url: `https://webchem.ncbr.muni.cz/API/ChannelsDB/Annotations/${pdbId}`, type: 'String', id: 'ChannelDB annotation Data' }, { isHidden: false })
+            let annotationData = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { url: subDB === "pdb" ? `${url}/annotations/${subDB}/${pid}` : `${url}/annotations/${subDB}/${pid.toLowerCase()}`, type: 'String', id: 'ChannelDB annotation Data' }, { isHidden: false })
                 .then(Transformer.Data.ParseJson, { id: 'ChannelDB annotation Data' }, { ref: 'channelsDB-annotation-data' });
 
             let promises = [];
@@ -111,11 +148,11 @@ namespace LiteMol.Example.Channels.State {
             */
             promises.push(plugin.applyTransform(data)
                 .then(() => {
-                    let parsedData = plugin.context.select('mole-data')[0] as Bootstrap.Entity.Data.Json;
+                    let parsedData = plugin.context.select('channelsDB-data')[0] as Bootstrap.Entity.Data.Json;
 
                     if (!parsedData) throw new Error('Data not available.');
                     else {
-                        let data_ = parsedData.props.data as DataInterface.MoleData;
+                        let data_ = parsedData.props.data as DataInterface.ChannelsDBData;
                         showDefaultVisuals(plugin, data_.Channels, /*data_.Channels.length*/2);/*.then(() => res(data_.Channels));*/
                     }
                 }));
@@ -484,7 +521,7 @@ namespace LiteMol.Example.Channels.State {
                 //console.log("creating surface from mesh");
                 //console.log(element.Mesh);
                 let surface = createSurface(element.Mesh);
-                t.add('mole-data', CreateSurface, {
+                t.add('channelsDB-data', CreateSurface, {
                     label: label(element),
                     tag: { type, element },
                     surface,
@@ -503,7 +540,7 @@ namespace LiteMol.Example.Channels.State {
                     for (let element of elements) {
                         element.__isBusy = false;
                     }
-                    res();
+                    res(null);
                 }).catch(e => rej(e));
             });
         }
@@ -513,7 +550,7 @@ namespace LiteMol.Example.Channels.State {
                 for (let element of elements) {
                     element.__isBusy = false;
                 }
-                res();
+                res(null);
             });
         }
     }
@@ -572,7 +609,7 @@ namespace LiteMol.Example.Channels.State {
                         */
                         
                         let t = plugin.createTransform();
-                        t.add('mole-data', CreateSurface, {
+                        t.add('channelsDB-data', CreateSurface, {
                             label: label(channel),
                             tag: { type:channel.Type, element: channel },
                             surface: surface.surface,
@@ -583,7 +620,7 @@ namespace LiteMol.Example.Channels.State {
 
                         plugin.applyTransform(t)
                             .then(()=>{
-                                res();
+                                res(null);
                             })
                             .catch((err)=>{
                                 rej(err)
@@ -634,7 +671,7 @@ namespace LiteMol.Example.Channels.State {
         return new Promise((res, rej) => {
             createOriginsSurface(origins).then(surface => {
                 let t = plugin.createTransform()
-                    .add('mole-data', CreateSurface, {
+                    .add('channelsDB-data', CreateSurface, {
                         label: 'Origins ' + origins.Type,
                         tag: { type: 'Origins', element: origins },
                         surface,
@@ -644,7 +681,7 @@ namespace LiteMol.Example.Channels.State {
                 
                 plugin.applyTransform(t).then(() => {
                     origins.__isBusy = false;
-                    res();
+                    res(null);
                 }).catch(rej);
             }).catch(rej);
         });
@@ -670,7 +707,7 @@ namespace LiteMol.Example.Channels.State {
         };
 
         return Bootstrap.Task.create<Bootstrap.Entity.Visual.Surface>(`Create Surface`, 'Silent', async ctx => {
-            let model = await LiteMol.Visualization.Surface.Model.create(t.params.tag, { surface: t.params.surface!, theme, parameters: { isWireframe: t.params.isWireframe! } }).run(ctx);
+            const model = await LiteMol.Visualization.Surface.Model.create(t.params.tag, { surface: t.params.surface!, theme, parameters: { isWireframe: t.params.isWireframe! } }).run(ctx);
             return Bootstrap.Entity.Visual.Surface.create(t, { label: t.params.label!, model, style, isSelectable: true, tag: t.params.tag });
         });
     }

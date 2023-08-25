@@ -34,13 +34,21 @@ namespace ChannelsDescriptions.UI{
 
         componentDidMount() {
             LiteMoleEvent.Tree.NodeAdded.getStream(this.props.controller.context).subscribe(e => {
-                if(e.data.tree !== void 0 && e.data.ref === "mole-data"){
+                if(e.data.tree !== void 0 && e.data.ref === "channelsDB-data"){
                     let toShow:DataInterface.Tunnel[] = [];
                     let data = e.data.props.data as DataInterface.ChannelsDBData;
-                    toShow = toShow.concat(data.Channels.CofactorTunnels);
-                    toShow = toShow.concat(data.Channels.ReviewedChannels);
-                    toShow = toShow.concat(data.Channels.CSATunnels);
-                    toShow = toShow.concat(data.Channels.TransmembranePores);
+                    toShow = toShow.concat(data.Channels.CSATunnels_MOLE);
+                    toShow = toShow.concat(data.Channels.CSATunnels_Caver);
+                    toShow = toShow.concat(data.Channels.ReviewedChannels_MOLE);
+                    toShow = toShow.concat(data.Channels.ReviewedChannels_Caver);
+                    toShow = toShow.concat(data.Channels.CofactorTunnels_MOLE);
+                    toShow = toShow.concat(data.Channels.CofactorTunnels_Caver);
+                    toShow = toShow.concat(data.Channels.TransmembranePores_MOLE);
+                    toShow = toShow.concat(data.Channels.TransmembranePores_Caver);
+                    toShow = toShow.concat(data.Channels.ProcognateTunnels_MOLE);
+                    toShow = toShow.concat(data.Channels.ProcagnateTunnels_Caver);
+                    toShow = toShow.concat(data.Channels.AlphaFillTunnels_MOLE);
+                    toShow = toShow.concat(data.Channels.AlphaFillTunnels_Caver);
                     let state = this.state;
                     state.data = toShow;
                     this.setState(state);

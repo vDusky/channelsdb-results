@@ -54,21 +54,33 @@ namespace DownloadReport.UI{
     class DownloadResultsMenu extends React.Component<{},{}>{
         render(){
             let pdbid = SimpleRouter.GlobalRouter.getCurrentPid();
-            let linkBase = `https://webchem.ncbr.muni.cz/API/ChannelsDB/Download/${pdbid}`;
+            let subDB = SimpleRouter.GlobalRouter.getCurrentDB();
+            let url = SimpleRouter.GlobalRouter.getChannelsURL();
+            let linkBase = subDB === "pdb" ? `${url}/download/${subDB}/${pdbid}` : `${url}/download/${subDB}/${pdbid.toLowerCase()}`;
             let items:JSX.Element[] = [];
         
             items.push(
-                <BootstrapDropDownMenuItem linkText=".zip" link={`${linkBase}?type=zip`} targetBlank={true} />
+                <BootstrapDropDownMenuItem linkText=".zip" link={`${linkBase}/zip`} targetBlank={true} />
             );
             items.push(
-                <BootstrapDropDownMenuItem linkText=".pdb" link={`${linkBase}?type=pdb`} targetBlank={true} />
+                <BootstrapDropDownMenuItem linkText=".pdb" link={`${linkBase}/pdb`} targetBlank={true} />
             );
             items.push(
-                <BootstrapDropDownMenuItem linkText=".json" link={`${linkBase}?type=json`} targetBlank={true} />
+                <BootstrapDropDownMenuItem linkText=".json" link={`${linkBase}/json`} targetBlank={true} />
             );
             items.push(
-                <BootstrapDropDownMenuItem linkText=".py" link={`${linkBase}?type=py`} targetBlank={true} />
+                <BootstrapDropDownMenuItem linkText=".py" link={`${linkBase}/pymol`} targetBlank={true} />
             );
+            items.push(
+                <BootstrapDropDownMenuItem linkText=".vmd" link={`${linkBase}/vmd`} targetBlank={true} />
+            );
+            items.push(
+                <BootstrapDropDownMenuItem linkText=".png" link={`${linkBase}/png`} targetBlank={true} />
+            );
+            items.push(
+                <BootstrapDropDownMenuItem linkText="chimera" link={`${linkBase}/chimera`} targetBlank={true} />
+            );
+            
             return <BootstrapDropDownMenuButton label="Download report" items={items} />
         }
     }

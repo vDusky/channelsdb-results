@@ -15,9 +15,10 @@ namespace LiteMol.Example.Channels.UI {
 
     export class App extends React.Component<{ plugin: Plugin.Controller }, { isLoading?: boolean, error?: string, data?: any, isWaitingForData?: boolean }> {
 
-        state = { isLoading: false, data: void 0, error: void 0 };
+        state = { isLoading: false, data: void 0, error: void 0};
 
         private currentProteinId:string;
+        private subDB:string;
 
         componentDidMount() {
             this.load();
@@ -32,12 +33,14 @@ namespace LiteMol.Example.Channels.UI {
 
         load() {
             this.currentProteinId = SimpleRouter.GlobalRouter.getCurrentPid();
+            this.subDB = SimpleRouter.GlobalRouter.getCurrentDB();
+            let channelsURL = SimpleRouter.GlobalRouter.getChannelsURL();
 
-            this.setState({ isLoading: true, error: void 0 });      //https://webchem.ncbr.muni.cz/API/ChannelsDB/PDB/1tqn
-            State.loadData(this.props.plugin, this.currentProteinId, `https://webchem.ncbr.muni.cz/API/ChannelsDB/PDB/${this.currentProteinId}`) //'channels.json'
+            this.setState({ isLoading: true, error: void 0 });
+            State.loadData(this.props.plugin, this.currentProteinId, channelsURL, this.subDB) //'channels.json'
                 .then(data => {
                     //console.log("loading done ok");
-                    let _data = (this.props.plugin.context.select("mole-data")[0] as Bootstrap.Entity.Data.Json).props.data as DataInterface.MoleData;
+                    let _data = (this.props.plugin.context.select("channelsDB-data")[0] as Bootstrap.Entity.Data.Json).props.data as DataInterface.ChannelsDBData;
                     if((_data as any).Error !== void 0){
                         this.setState({ isLoading: false, error: (_data as any).Error as string });
                     }
@@ -105,10 +108,18 @@ namespace LiteMol.Example.Channels.UI {
                     Channels
                 </div>
                 <div>
-                    <Channels channels={this.props.data.Channels.ReviewedChannels} state={this.props}  header='Reviewed Channels' />
-                    <Channels channels={this.props.data.Channels.CSATunnels} state={this.props}  header='CSA Tunnels' />
-                    <Channels channels={this.props.data.Channels.TransmembranePores} state={this.props}  header='Transmembrane Pores' />
-                    <Channels channels={this.props.data.Channels.CofactorTunnels} state={this.props}  header='Cofactor Tunnels' />
+                    {this.props.data.Channels.ReviewedChannels_MOLE.length > 0 ? <Channels channels={this.props.data.Channels.ReviewedChannels_MOLE} state={this.props}  header='Reviewed Channels MOLE' /> : null}
+                    {this.props.data.Channels.ReviewedChannels_Caver.length > 0 ? <Channels channels={this.props.data.Channels.ReviewedChannels_Caver} state={this.props}  header='Reviewed Channels Caver' /> : null}
+                    {this.props.data.Channels.CSATunnels_MOLE.length > 0 ? <Channels channels={this.props.data.Channels.CSATunnels_MOLE} state={this.props}  header='CSA Tunnels MOLE' /> : null}
+                    {this.props.data.Channels.CSATunnels_Caver.length > 0 ? <Channels channels={this.props.data.Channels.CSATunnels_Caver} state={this.props}  header='CSA Tunnels Caver' /> : null}
+                    {this.props.data.Channels.TransmembranePores_MOLE.length > 0 ? <Channels channels={this.props.data.Channels.TransmembranePores_MOLE} state={this.props}  header='Transmembrane Pores MOLE' /> : null}
+                    {this.props.data.Channels.TransmembranePores_Caver.length > 0 ? <Channels channels={this.props.data.Channels.TransmembranePores_Caver} state={this.props}  header='Transmembrane Pores Caver' /> : null}
+                    {this.props.data.Channels.CofactorTunnels_MOLE.length > 0 ? <Channels channels={this.props.data.Channels.CofactorTunnels_MOLE} state={this.props}  header='Cofactor Tunnels MOLE' /> : null}
+                    {this.props.data.Channels.CofactorTunnels_Caver.length > 0 ? <Channels channels={this.props.data.Channels.CofactorTunnels_Caver} state={this.props}  header='Cofactor Tunnels Caver' /> : null}
+                    {this.props.data.Channels.ProcognateTunnels_MOLE.length > 0 ? <Channels channels={this.props.data.Channels.ProcognateTunnels_MOLE} state={this.props}  header='COGNATE Tunnels MOLE' /> : null}
+                    {this.props.data.Channels.ProcagnateTunnels_Caver.length > 0 ? <Channels channels={this.props.data.Channels.ProcagnateTunnels_Caver} state={this.props}  header='COGNATE Tunnels Caver' /> : null}
+                    {this.props.data.Channels.AlphaFillTunnels_MOLE.length > 0 ? <Channels channels={this.props.data.Channels.AlphaFillTunnels_MOLE} state={this.props}  header='AlphaFill Tunnels MOLE' /> : null}
+                    {this.props.data.Channels.AlphaFillTunnels_Caver.length > 0 ? <Channels channels={this.props.data.Channels.AlphaFillTunnels_Caver} state={this.props}  header='AlphaFill Tunnels Caver' /> : null}
                 </div>
             </div>;
             /*
@@ -193,6 +204,7 @@ namespace LiteMol.Example.Channels.UI {
 
             this.observerChannels = this.props.plugin.subscribe(Bootstrap.Event.Visual.VisualSelectElement, e => {
                 let eventData = e.data as ChannelEventInfo;
+                console.log(eventData);
                 if(e.data !== void 0 && eventData.source !== void 0 && eventData.source.props !== void 0 && eventData.source.props.tag === void 0){
                     return;
                 }
@@ -216,6 +228,7 @@ namespace LiteMol.Example.Channels.UI {
                     }
                 }
             });
+            console.log(this.observerChannels);
         }
 
         componentWillUnmount() {
@@ -240,7 +253,7 @@ namespace LiteMol.Example.Channels.UI {
         }
     }
 
-    export class Section extends React.Component<{ header: string, count: number }, { isExpanded: boolean }> {
+    export class Section extends React.Component<{ header: string, count: number, children: React.ReactNode }, { isExpanded: boolean }> {
         state = { isExpanded: false }
 
         private toggle(e: React.MouseEvent<HTMLElement>) {
@@ -303,7 +316,7 @@ namespace LiteMol.Example.Channels.UI {
             return elements;
         }
 
-        render() {           
+        render() {   
             let emptyToggler = <span className="disabled glyphicon glyphicon-chevron-down" title="No annotations available for this channel" onClick={this.toggleAnnotations.bind(this)} />
             return <div className="ui-label">
                 <input type='checkbox' checked={!!this.props.element.__isVisible} onChange={() => this.toggle()} disabled={!!this.props.element.__isBusy} />

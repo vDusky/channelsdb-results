@@ -160,22 +160,40 @@ namespace Annotation{
 
         private static parseLiningResidues(data:DataInterface.ChannelsDBData){
             let channels:DataInterface.Tunnel[] = [];
+
+            // if (data.Channels) {
+            //     Object.keys(data.Channels).forEach(function(key) {
+            //         console.log(key);
+            //         console.log(data.Channels[key]);
+            //         if (data.Channels[key] !== void 0) {
+            //             channels = channels.concat(data.Channels[key]);
+            //         }
+            //     });
+            // }
             
-            if(data.Channels.ReviewedChannels !== void 0){
-                channels = channels.concat(data.Channels.ReviewedChannels);
-            }
+            if(data.Channels.CSATunnels_MOLE !== void 0) channels = channels.concat(data.Channels.CSATunnels_MOLE);
 
-            if(data.Channels.CSATunnels !== void 0){
-                channels = channels.concat(data.Channels.CSATunnels);
-            }
+            if(data.Channels.CSATunnels_Caver !== void 0) channels = channels.concat(data.Channels.CSATunnels_Caver);
 
-            if(data.Channels.TransmembranePores !== void 0){
-                channels = channels.concat(data.Channels.TransmembranePores);
-            }
+            if(data.Channels.ReviewedChannels_MOLE !== void 0) channels = channels.concat(data.Channels.ReviewedChannels_MOLE);
 
-            if(data.Channels.CofactorTunnels !== void 0){
-                channels = channels.concat(data.Channels.CofactorTunnels);
-            }
+            if(data.Channels.ReviewedChannels_Caver !== void 0) channels = channels.concat(data.Channels.ReviewedChannels_Caver);
+
+            if(data.Channels.CofactorTunnels_MOLE !== void 0) channels = channels.concat(data.Channels.CofactorTunnels_MOLE);
+
+            if(data.Channels.CofactorTunnels_Caver !== void 0) channels = channels.concat(data.Channels.CofactorTunnels_Caver);
+
+            if(data.Channels.TransmembranePores_MOLE !== void 0) channels = channels.concat(data.Channels.TransmembranePores_MOLE);
+
+            if(data.Channels.TransmembranePores_Caver !== void 0) channels = channels.concat(data.Channels.TransmembranePores_Caver);
+
+            if(data.Channels.ProcognateTunnels_MOLE !== void 0) channels = channels.concat(data.Channels.ProcognateTunnels_MOLE);
+
+            if(data.Channels.ProcagnateTunnels_Caver !== void 0) channels = channels.concat(data.Channels.ProcagnateTunnels_Caver);
+
+            if(data.Channels.AlphaFillTunnels_MOLE !== void 0) channels = channels.concat(data.Channels.AlphaFillTunnels_MOLE);
+
+            if(data.Channels.AlphaFillTunnels_Caver !== void 0) channels = channels.concat(data.Channels.AlphaFillTunnels_Caver);
 
             let liningResidues:string[] = [];
             for(let channel of channels){                
@@ -225,12 +243,12 @@ namespace Annotation{
             let annotationsAPIobserver:any;
 
             new Promise<Object>((res,rej)=>{
-                let moleData = context.select("mole-data")[0] as LiteMol.Bootstrap.Entity.Data.Json;
+                let moleData = context.select("channelsDB-data")[0] as LiteMol.Bootstrap.Entity.Data.Json;
                 if(moleData !== void 0){
                     res(this.handleChannelsAPIData(moleData.props.data));
                 }else{
                     channelsAPIobserver = LiteMoleEvent.Tree.NodeAdded.getStream(context).subscribe(e => {
-                        if(e.data.tree !== void 0 && e.data.ref === "mole-data"){
+                        if(e.data.tree !== void 0 && e.data.ref === "channelsDB-data"){
                             res(this.handleChannelsAPIData(e.data.props.data));
                         }
                     });

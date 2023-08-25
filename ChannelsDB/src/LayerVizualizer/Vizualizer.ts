@@ -1449,11 +1449,11 @@ namespace LayersVizualizer{
         }
 
         private getSVGData(){
-            let ctx = this.getContext() as CanvasRenderingContext2D & {getSvg: () => XMLDocument,getSerializedSvg: ()=>boolean};
+            const ctx = this.getContext() as CanvasRenderingContext2D & {getSvg: () => XMLDocument,getSerializedSvg: ()=>boolean};
             ctx.getSerializedSvg();
             
             let svg = ctx.getSvg();
-            svg.charset="UTF-8";
+            //svg.characterSet="UTF-8";
 
             return svg;
         }

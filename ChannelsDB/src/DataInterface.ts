@@ -5,7 +5,16 @@ namespace DataInterface{
         StartDistance:number,
         EndDistance:number,
         LocalMinimum: boolean,
-        Bottleneck: boolean
+        Bottleneck: boolean,
+        bottleneck: boolean
+    };
+    export interface LayerGeometryCaver{
+        MinRadius:number,
+        MinFreeRadius:number,
+        StartDistance:number,
+        EndDistance:number,
+        LocalMinimum: boolean,
+        bottleneck: boolean
     };
     export interface Layerweightedproperties{
         Hydrophobicity: number,
@@ -19,11 +28,23 @@ namespace DataInterface{
         FlowIndices:string[],
         Properties:Properties 
     };
+    export interface LayersInfoCaver{
+        LayerGeometry:LayerGeometryCaver,
+        Residues:string[],
+        FlowIndices:string[],
+        Properties:Properties 
+    };
     export interface Layers{
         ResidueFlow:string[],
         HetResidues:any[], //Not Used
         LayerWeightedProperties:Layerweightedproperties
         LayersInfo:LayersInfo[]
+    };
+    export interface LayersCaver{
+        ResidueFlow:string[],
+        HetResidues:any[], //Not Used
+        LayerWeightedProperties:Layerweightedproperties
+        LayersInfo:LayersInfoCaver[]
     };
     export interface Profile{
         Radius: number,
@@ -53,6 +74,15 @@ namespace DataInterface{
         Profile: Profile[],
         Layers: Layers
     };
+    export interface TunnelCaver{
+        Type: string,
+        Id: string,
+        Cavity: string,
+        Auto: boolean,
+        Properties: Properties,
+        Profile: Profile[],
+        Layers: LayersCaver
+    };
     export interface MoleData{
         Channels:{
             Tunnels:Tunnel[],
@@ -69,10 +99,18 @@ namespace DataInterface{
             Pores:Tunnel[],
             Paths:Tunnel[]
             */
-            ReviewedChannels: Tunnel[],
-            CSATunnels: Tunnel[],
-            TransmembranePores: Tunnel[],
-            CofactorTunnels: Tunnel[]
+            CSATunnels_MOLE: Tunnel[],
+            CSATunnels_Caver: Tunnel[],
+            ReviewedChannels_MOLE: Tunnel[],
+            ReviewedChannels_Caver: Tunnel[],
+            CofactorTunnels_MOLE: Tunnel[],
+            CofactorTunnels_Caver: Tunnel[],
+            TransmembranePores_MOLE: Tunnel[],
+            TransmembranePores_Caver: Tunnel[],
+            ProcognateTunnels_MOLE: Tunnel[],
+            ProcagnateTunnels_Caver: Tunnel[],
+            AlphaFillTunnels_MOLE: Tunnel[],
+            AlphaFillTunnels_Caver: Tunnel[]
         },
         Annotations:AnnotationObject[]
     }

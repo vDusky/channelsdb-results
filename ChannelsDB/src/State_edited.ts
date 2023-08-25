@@ -29,7 +29,7 @@ namespace LiteMol.Example.Channels.State {
                 .then(Transformer.Molecule.CreateMacromoleculeVisual, { polymer: true, polymerRef: 'polymer-visual', het: true })
 
             let data = plugin.createTransform().add(plugin.root, Transformer.Data.Download, { url, type: 'String', id: 'MOLE Data' }, { isHidden: true })
-                .then(Transformer.Data.ParseJson, { id: 'MOLE Data' }, { ref: 'mole-data' });
+                .then(Transformer.Data.ParseJson, { id: 'MOLE Data' }, { ref: 'channelsDB-data' });
 
             plugin.applyTransform(model)
                 .then(() => {
@@ -38,7 +38,7 @@ namespace LiteMol.Example.Channels.State {
 
             plugin.applyTransform(data)
                 .then(() => {
-                    let data = plugin.context.select('mole-data')[0] as Bootstrap.Entity.Data.Json;
+                    let data = plugin.context.select('channelsDB-data')[0] as Bootstrap.Entity.Data.Json;
                     if (!data) rej('Data not available.');
                     else {
                         showDefaultVisuals(plugin, data.props.data, data.props.data.length).then(() => res(data.props.data));
@@ -160,7 +160,7 @@ namespace LiteMol.Example.Channels.State {
                 
                 sphereSurface.then((res) => {
                     let surface = res;
-                    t.add('mole-data', CreateSurface, {
+                    t.add('channelsDB-data', CreateSurface, {
                         label: label(element),
                         tag: { type, element },
                         surface: surface.surface,
@@ -232,7 +232,7 @@ namespace LiteMol.Example.Channels.State {
         return new Promise((res, rej) => {
             createOriginsSurface(origins).then(surface => {
                 let t = plugin.createTransform()
-                    .add('mole-data', CreateSurface, {
+                    .add('channelsDB-data', CreateSurface, {
                         label: 'Origins ' + origins.Type,
                         tag: { type: 'Origins', element: origins },
                         surface,

@@ -175,17 +175,22 @@ namespace SimpleRouter{
         defaultContextPath:string, 
         defaultPid:string,
         useParameterAsPid?: boolean,
-        useLastPathPartAsPid?: boolean
+        useLastPathPartAsPid?: boolean,
+        defaultDB: string
     };
 
     export class GlobalRouter{
         private static defaultContextPath:string;
         private static defaultPid:string;
+        private static defaultDB:string;
         private static useParameterAsPid:boolean;
         private static useLastPathPartAsPid:boolean;
         private static currentPid:string;
+        private static subDB:string;
 
         private static router:Router;
+
+        private static defaultChannelsURL = "http://channelsdb2.biodata.ceitec.cz";
 
         private static isInitialized:boolean = false;
 
@@ -194,27 +199,40 @@ namespace SimpleRouter{
             this.defaultPid=routingParameters.defaultPid;
             this.useParameterAsPid=(routingParameters.useParameterAsPid===void 0)?false:routingParameters.useParameterAsPid;
             this.useLastPathPartAsPid=(routingParameters.useLastPathPartAsPid===void 0)?false:routingParameters.useLastPathPartAsPid;
+            this.defaultDB=routingParameters.defaultDB;
 
             this.router = new Router(routingParameters.defaultContextPath);
 
             let url = this.router.getAbsoluePath();
 
+            let subDB = null;
             let pid = null;
             if(this.useParameterAsPid === true){
+                subDB = url.getParameterValue("subDB");
                 pid = url.getParameterValue("pid");
             }
             else if(this.useLastPathPartAsPid === true){
                 let lastPathPartAsParam = url.substractPathFromStart(this.defaultContextPath).getLastPart();
-                pid = lastPathPartAsParam===""?null:lastPathPartAsParam;
+                pid = lastPathPartAsParam === "" ? null : lastPathPartAsParam;
             }
             
-            this.currentPid = (pid !== null)?pid:this.defaultPid;
+            this.currentPid = (pid !== null) ? pid : this.defaultPid;
+            this.subDB = (subDB !== null) ? subDB : this.defaultDB;
             if(pid !== this.currentPid){
                 if(this.useParameterAsPid === true){
-                    this.router.changeUrl("detail",document.title,`${url}/?pid=${this.currentPid}`);
+                    this.router.changeUrl("detail",document.title,`${url}/pdb/${this.currentPid}`);
                 }
                 else if(this.useLastPathPartAsPid === true){
-                    this.router.changeUrl("detail",document.title,`${url}/${this.currentPid}`);
+                    subDB 
+                    ? this.router.changeUrl("detail",document.title,`${subDB}/${this.currentPid}`)
+                    : this.router.changeUrl("detail",document.title,`${url}/${this.currentPid}`);
+                }
+            } else {
+                if(subDB){
+                    this.router.changeUrl("detail",document.title,`${subDB}/${this.currentPid}`);
+                }
+                else if(this.useLastPathPartAsPid === true){
+                    this.router.changeUrl("detail",document.title,`${url}/detail/${this.currentPid}`);
                 }
             }
 
@@ -228,7 +246,22 @@ namespace SimpleRouter{
 
             return this.currentPid;
         }
+
+        public static getCurrentDB(){
+            if(!this.isInitialized){
+                throw new Error("GlobalRouter is not inititalised! Call init(..) function before use!");
+            }
+
+            return this.subDB;
+        }
         
+        public static getChannelsURL(){
+            if(!this.isInitialized){
+                throw new Error("GlobalRouter is not inititalised! Call init(..) function before use!");
+            }
+
+            return this.defaultChannelsURL;
+        }
 
     }
 }

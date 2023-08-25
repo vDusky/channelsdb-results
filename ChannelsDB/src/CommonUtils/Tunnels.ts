@@ -9,7 +9,7 @@ namespace CommonUtils{
         public static getBottleneck(tunnel: DataInterface.Tunnel):string{        
             let bneck = "<Unknown>";
             for(let element of tunnel.Layers.LayersInfo){
-                if(element.LayerGeometry.Bottleneck){
+                if(element.LayerGeometry.Bottleneck || element.LayerGeometry.bottleneck){
                     let val = element.LayerGeometry.MinRadius;
                     bneck = (Math.round(val*10)/10).toString();
                     break;
